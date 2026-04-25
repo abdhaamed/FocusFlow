@@ -1,0 +1,67 @@
+{
+  "active_plan": "C:\\Users\\hamid\\Documents\\projects\\vscode\\FocusFlow\\.sisyphus\\plans\\focusflow-flutter-stub-scaffold.md",
+  "started_at": "2026-04-25T04:19:17.435Z",
+  "session_ids": [
+    "ses_23d35e7f3ffedYmabcONQq6B2K",
+    "ses_23d16f23dffe2kZg34O1ibSkb9",
+    "ses_23d16e8d5ffebJfls6x95wR6zj",
+    "ses_23d16e052ffeGihq2HL8j43mnx",
+    "ses_23d16dfdcffeyfkAj0MSx7rwH2"
+  ],
+  "session_origins": {
+    "ses_23d35e7f3ffedYmabcONQq6B2K": "direct",
+    "ses_23d16f23dffe2kZg34O1ibSkb9": "appended",
+    "ses_23d16e8d5ffebJfls6x95wR6zj": "appended",
+    "ses_23d16e052ffeGihq2HL8j43mnx": "appended",
+    "ses_23d16dfdcffeyfkAj0MSx7rwH2": "appended"
+  },
+  "plan_name": "focusflow-flutter-stub-scaffold",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Bootstrap Flutter project + add dependencies (foundation)",
+      "session_id": "ses_23d2257cdffeux6enbVqwZ2CH2",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-25T04:21:20.418Z"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "Implement core theme + constants (AppColors/AppTypography/AppTheme/AppConstants)",
+      "session_id": "ses_23d201a94ffercaYxtaltf0EX4",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-25T04:24:01.513Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Generate shared widgets stubs (Hamid)",
+      "session_id": "ses_23d1d4a50ffeX7b0crclRvdxNp",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-04-25T04:26:39.574Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Wire app entry + router table + update tests + run QA gates",
+      "session_id": "ses_23d1b848dffeYJOghFlsBQxbx4",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-25T04:31:01.972Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "Plan Compliance Audit — oracle",
+      "session_id": "ses_23d16e052ffeGihq2HL8j43mnx",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-25T04:32:31.297Z"
+    }
+  }
+}
