@@ -5,12 +5,19 @@ import '../../../core/theme/app_typography.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/main_bottom_nav.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/goal_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final goalProvider = context.watch<GoalProvider>();
+    final userName = authProvider.user?.displayName?.split(' ').first ?? 'User';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -28,13 +35,16 @@ class HomeScreen extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16.0),
           child: Center(
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              child: const Icon(
-                Icons.person,
-                size: 20,
-                color: AppColors.primary,
+            child: GestureDetector(
+              onTap: () => context.push(AppRoutes.profile),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: const Icon(
+                  Icons.person,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -84,7 +94,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Good morning, Alex. Let\'s focus.',
+              'Good morning, $userName. Let\'s focus.',
               style: AppTypography.bodyMedium.copyWith(
                 color: AppColors.neutral,
                 fontSize: 14,
@@ -93,7 +103,10 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Active Goal Card
-            _buildActiveGoalCard(context),
+            if (goalProvider.hasGoal)
+              _buildActiveGoalCard(context, goalProvider)
+            else
+              _buildNoGoalCard(context),
             const SizedBox(height: 16),
 
             // Add New Goal Button
@@ -114,7 +127,35 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveGoalCard(BuildContext context) {
+  Widget _buildNoGoalCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.flag_outlined, size: 48, color: AppColors.neutral),
+          const SizedBox(height: 16),
+          Text(
+            'No Active Goal',
+            style: AppTypography.headlineMedium.copyWith(color: AppColors.primary, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Set your primary goal to start tracking progress.',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.neutral, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveGoalCard(BuildContext context, GoalProvider goalProvider) {
     return GestureDetector(
       onTap: () {
         context.push(AppRoutes.goalDetail);
@@ -192,7 +233,7 @@ class HomeScreen extends StatelessWidget {
 
                 // Goal Title
                 Text(
-                  'Complete Project Alpha MVP',
+                  goalProvider.primaryObjective ?? 'My Primary Goal',
                   style: AppTypography.headlineMedium.copyWith(
                     color: AppColors.primary,
                     fontSize: 18,

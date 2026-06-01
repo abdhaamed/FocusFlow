@@ -7,6 +7,8 @@ abstract class AppConstants {
 
 abstract class AppRoutes {
   static const String welcome = '/welcome';
+  static const String login = '/login';
+  static const String register = '/register';
   static const String onboardingSpecific = '/onboarding/specific';
   static const String onboardingMeasurable = '/onboarding/measurable';
   static const String onboardingAchievable = '/onboarding/achievable';
@@ -19,6 +21,7 @@ abstract class AppRoutes {
   static const String createTask = '/tasks/create';
   static const String taskDetail = '/tasks/:id';
   static const String priority = '/priority';
+  static const String profile = '/profile';
   static const String analytics = '/analytics';
 }
 

@@ -1,8 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/main_bottom_nav.dart';
+import '../../../core/providers/task_provider.dart';
+import '../../../core/models/task_model.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_constants.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -35,51 +40,78 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final taskProvider = context.watch<TaskProvider>();
+    final allTasks = taskProvider.tasks;
+
+    int totalTasks = allTasks.length;
+    int doneTasks = taskProvider.doneTasks.length;
+    double progressRatio = totalTasks == 0 ? 0.0 : doneTasks / totalTasks;
+
+    int q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+    for (var t in allTasks) {
+      if (t.priorityLabel == 'Q1') q1++;
+      else if (t.priorityLabel == 'Q2') q2++;
+      else if (t.priorityLabel == 'Q3') q3++;
+      else q4++;
+    }
+
+    double q1Pct = totalTasks == 0 ? 0.0 : q1 / totalTasks;
+    double q2Pct = totalTasks == 0 ? 0.0 : q2 / totalTasks;
+    double q3Pct = totalTasks == 0 ? 0.0 : q3 / totalTasks;
+    double q4Pct = totalTasks == 0 ? 0.0 : q4 / totalTasks;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Page header ──────────────────────────────────────────────────
-            Text(
-              'Analytics',
-              style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.primary,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
+      body: taskProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Page header ──────────────────────────────────────────────────
+                  Text(
+                    'Analytics',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.primary,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your productivity insights for this week.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.neutral,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Card 1: OKR Progress ─────────────────────────────────────────
+                  _OKRProgressCard(
+                    progressAnim: _progressAnim,
+                    progressRatio: progressRatio,
+                    totalTasks: totalTasks,
+                    doneTasks: doneTasks,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Card 2: Weekly Briefing ──────────────────────────────────────
+                  _weeklyBriefingCard(q1, totalTasks, q1Pct),
+                  const SizedBox(height: 16),
+
+                  // ── Card 3: Eisenhower Distribution ─────────────────────────────
+                  _eisenhowerCard(q1Pct, q2Pct, q3Pct, q4Pct),
+                  const SizedBox(height: 16),
+
+                  // ── Card 4: Activity Heatmap ─────────────────────────────────────
+                  _activityCard(),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Your productivity insights for this week.',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.neutral,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // ── Card 1: OKR Progress ─────────────────────────────────────────
-            _OKRProgressCard(progressAnim: _progressAnim),
-            const SizedBox(height: 16),
-
-            // ── Card 2: Weekly Briefing ──────────────────────────────────────
-            _weeklyBriefingCard(),
-            const SizedBox(height: 16),
-
-            // ── Card 3: Eisenhower Distribution ─────────────────────────────
-            _eisenhowerCard(),
-            const SizedBox(height: 16),
-
-            // ── Card 4: Activity Heatmap ─────────────────────────────────────
-            _activityCard(),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
       bottomNavigationBar: const MainBottomNav(currentIndex: 3),
     );
   }
@@ -101,10 +133,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       leading: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: Center(
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            child: const Icon(Icons.person, size: 20, color: AppColors.primary),
+          child: GestureDetector(
+            onTap: () => context.push(AppRoutes.profile),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              child: const Icon(Icons.person, size: 20, color: AppColors.primary),
+            ),
           ),
         ),
       ),
@@ -137,7 +172,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   // ── Weekly Briefing Card (dark) ────────────────────────────────────────────
-  Widget _weeklyBriefingCard() {
+  Widget _weeklyBriefingCard(int q1Count, int totalTasks, double q1Pct) {
+    String q1Desc = 'Excellent management of Urgent & Important tasks.';
+    if (q1Pct > 0.6) {
+      q1Desc = 'You have a high volume of Urgent tasks. Consider delegating more to Q3.';
+    } else if (q1Pct < 0.2 && totalTasks > 0) {
+      q1Desc = 'Your urgent tasks are well under control. Great job!';
+    } else if (totalTasks == 0) {
+      q1Desc = 'Start adding tasks to see your insights here.';
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -167,10 +211,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
           // Deep Work Hours
           _briefingStatRow(
-            value: '14',
-            label: 'DEEP WORK HOURS',
-            description:
-                'You exceeded your deep work goal by 2 hours this week, primarily focusing on Q1 tasks.',
+            value: '$totalTasks',
+            label: 'TOTAL TASKS',
+            description: 'You have actively recorded $totalTasks tasks across your board.',
             valueColor: const Color(0xFF4ADE80),
           ),
           const SizedBox(height: 4),
@@ -179,10 +222,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
           // Q1 Completion
           _briefingStatRow(
-            value: '85%',
-            label: 'Q1 COMPLETION',
-            description:
-                'Excellent management of Urgent & Important tasks. Delegation in Q3 has improved efficiency.',
+            value: '${(q1Pct * 100).toInt()}%',
+            label: 'Q1 DISTRIBUTION',
+            description: q1Desc,
             valueColor: const Color(0xFF4ADE80),
           ),
         ],
@@ -230,7 +272,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   // ── Eisenhower Distribution ────────────────────────────────────────────────
-  Widget _eisenhowerCard() {
+  Widget _eisenhowerCard(double q1, double q2, double q3, double q4) {
     return _surfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,11 +312,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 height: 100,
                 child: CustomPaint(
                   painter: _RingChartPainter(
-                    segments: const [
-                      _Segment(value: 0.45, color: Color(0xFFDC2626)), // Q1
-                      _Segment(value: 0.30, color: AppColors.primary), // Q2
-                      _Segment(value: 0.15, color: Color(0xFF16A34A)), // Q3
-                      _Segment(value: 0.10, color: Color(0xFFE5E7EB)), // Q4
+                    segments: [
+                      _Segment(value: q1 == 0 && q2 == 0 && q3 == 0 && q4 == 0 ? 0.0 : q1, color: const Color(0xFFDC2626)), // Q1
+                      _Segment(value: q1 == 0 && q2 == 0 && q3 == 0 && q4 == 0 ? 0.0 : q2, color: AppColors.primary), // Q2
+                      _Segment(value: q1 == 0 && q2 == 0 && q3 == 0 && q4 == 0 ? 0.0 : q3, color: const Color(0xFF16A34A)), // Q3
+                      _Segment(value: q1 == 0 && q2 == 0 && q3 == 0 && q4 == 0 ? 1.0 : q4, color: const Color(0xFFE5E7EB)), // Q4
                     ],
                   ),
                 ),
@@ -286,16 +328,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _legendItem(
-                      color: const Color(0xFFDC2626), label: 'Q1: 45%'),
+                      color: const Color(0xFFDC2626), label: 'Q1: ${(q1 * 100).toInt()}%'),
                   const SizedBox(height: 10),
                   _legendItem(
-                      color: AppColors.primary, label: 'Q2: 30%'),
+                      color: AppColors.primary, label: 'Q2: ${(q2 * 100).toInt()}%'),
                   const SizedBox(height: 10),
                   _legendItem(
-                      color: const Color(0xFF16A34A), label: 'Q3: 15%'),
+                      color: const Color(0xFF16A34A), label: 'Q3: ${(q3 * 100).toInt()}%'),
                   const SizedBox(height: 10),
                   _legendItem(
-                      color: const Color(0xFFE5E7EB), label: 'Q4: 10%'),
+                      color: const Color(0xFFE5E7EB), label: 'Q4: ${(q4 * 100).toInt()}%'),
                 ],
               ),
             ],
@@ -447,7 +489,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
 class _OKRProgressCard extends StatelessWidget {
   final Animation<double> progressAnim;
-  const _OKRProgressCard({required this.progressAnim});
+  final double progressRatio;
+  final int totalTasks;
+  final int doneTasks;
+  const _OKRProgressCard({
+    required this.progressAnim,
+    required this.progressRatio,
+    required this.totalTasks,
+    required this.doneTasks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -480,7 +530,7 @@ class _OKRProgressCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Q3 OKR Progress',
+                    'Task Completion',
                     style: AppTypography.headlineMedium.copyWith(
                       color: AppColors.primary,
                       fontSize: 15,
@@ -488,7 +538,7 @@ class _OKRProgressCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Launch MVP V2.0',
+                    '$doneTasks out of $totalTasks Tasks',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.neutral.withOpacity(0.7),
                       fontSize: 12,
@@ -509,7 +559,7 @@ class _OKRProgressCard extends StatelessWidget {
                 height: 130,
                 child: CustomPaint(
                   painter: _CircleProgressPainter(
-                    progress: progressAnim.value * 0.68,
+                    progress: progressAnim.value * progressRatio,
                     trackColor: const Color(0xFFE8EBF5),
                     progressColor: AppColors.primary,
                     strokeWidth: 10,
@@ -519,7 +569,7 @@ class _OKRProgressCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${(progressAnim.value * 68).toInt()}%',
+                          '${(progressAnim.value * progressRatio * 100).toInt()}%',
                           style: AppTypography.headlineMedium.copyWith(
                             color: AppColors.primary,
                             fontSize: 26,
@@ -548,7 +598,7 @@ class _OKRProgressCard extends StatelessWidget {
             builder: (_, __) => ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: progressAnim.value * 0.68,
+                value: progressAnim.value * progressRatio,
                 minHeight: 6,
                 backgroundColor: const Color(0xFFE8EBF5),
                 valueColor:
@@ -680,6 +730,7 @@ class _RingChartPainter extends CustomPainter {
     const gap = 0.04; // radian gap between segments
 
     for (final seg in segments) {
+      if (seg.value == 0) continue; // Skip empty segments
       final sweep = 2 * math.pi * seg.value - gap;
       final paint = Paint()
         ..color = seg.color
@@ -690,7 +741,7 @@ class _RingChartPainter extends CustomPainter {
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: innerRadius),
         startAngle,
-        sweep,
+        sweep > 0 ? sweep : 0,
         false,
         paint,
       );
@@ -701,3 +752,4 @@ class _RingChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(_RingChartPainter old) => false;
 }
+

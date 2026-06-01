@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/progress_bar.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/goal_provider.dart';
 
 class OnboardingAchievableScreen extends StatefulWidget {
   const OnboardingAchievableScreen({super.key});
@@ -14,7 +16,35 @@ class OnboardingAchievableScreen extends StatefulWidget {
 }
 
 class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen> {
+  late TextEditingController _milestonesController;
+  late TextEditingController _resourcesController;
+  late TextEditingController _blockersController;
   bool _isRealistic = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _milestonesController = TextEditingController();
+    _resourcesController = TextEditingController();
+    _blockersController = TextEditingController();
+  }
+
+  void _updateAchievable() {
+    final miles = _milestonesController.text;
+    final res = _resourcesController.text;
+    final block = _blockersController.text;
+    
+    final achievableString = 'Milestones: $miles\nResources: $res\nBlockers: $block\nRealistic: $_isRealistic';
+    context.read<GoalProvider>().setAchievable(achievableString);
+  }
+
+  @override
+  void dispose() {
+    _milestonesController.dispose();
+    _resourcesController.dispose();
+    _blockersController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +174,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                         ],
                       ),
                       inputWidget: _buildTextField(
+                        controller: _milestonesController,
                         hint: 'e.g., 1. Research phase, 2. Draft initial proposal...',
                         maxLines: 4,
                       ),
@@ -167,6 +198,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                         ],
                       ),
                       inputWidget: _buildTextField(
+                        controller: _resourcesController,
                         hint: 'Budget, tools, software...',
                         maxLines: 3,
                       ),
@@ -190,6 +222,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                         ],
                       ),
                       inputWidget: _buildTextField(
+                        controller: _blockersController,
                         hint: 'Time constraints, lack of expertise...',
                         maxLines: 3,
                       ),
@@ -246,6 +279,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                               setState(() {
                                 _isRealistic = val;
                               });
+                              _updateAchievable();
                             },
                           ),
                         ],
@@ -283,6 +317,12 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                       variant: AppButtonVariant.primary,
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       onPressed: () {
+                        if (_milestonesController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please outline your key milestones.')),
+                          );
+                          return;
+                        }
                         context.push(AppRoutes.onboardingRelevant);
                       },
                     ),
@@ -334,8 +374,10 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
     );
   }
 
-  Widget _buildTextField({required String hint, required int maxLines}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required int maxLines}) {
     return TextField(
+      controller: controller,
+      onChanged: (_) => _updateAchievable(),
       maxLines: maxLines,
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(

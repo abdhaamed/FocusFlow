@@ -5,9 +5,31 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/progress_bar.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/goal_provider.dart';
 
-class OnboardingSpecificScreen extends StatelessWidget {
+class OnboardingSpecificScreen extends StatefulWidget {
   const OnboardingSpecificScreen({super.key});
+
+  @override
+  State<OnboardingSpecificScreen> createState() => _OnboardingSpecificScreenState();
+}
+
+class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final goalProvider = Provider.of<GoalProvider>(context, listen: false);
+    _controller = TextEditingController(text: goalProvider.specific);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +184,10 @@ class OnboardingSpecificScreen extends StatelessWidget {
                                 Stack(
                                   children: [
                                     TextField(
+                                      controller: _controller,
+                                      onChanged: (val) {
+                                        context.read<GoalProvider>().setSpecific(val);
+                                      },
                                       maxLines: 7,
                                       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
                                       decoration: InputDecoration(
@@ -248,6 +274,14 @@ class OnboardingSpecificScreen extends StatelessWidget {
                       variant: AppButtonVariant.primary,
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       onPressed: () {
+                        if (_controller.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please define your specific goal before proceeding.')),
+                          );
+                          return;
+                        }
+                        // Also set primaryObjective from specific for now
+                        context.read<GoalProvider>().setPrimaryObjective(_controller.text.trim());
                         context.push(AppRoutes.onboardingMeasurable);
                       },
                     ),

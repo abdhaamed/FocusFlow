@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/progress_bar.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/goal_provider.dart';
 
 class OnboardingMeasurableScreen extends StatefulWidget {
   const OnboardingMeasurableScreen({super.key});
@@ -14,7 +16,41 @@ class OnboardingMeasurableScreen extends StatefulWidget {
 }
 
 class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen> {
+
+  late TextEditingController _metricController;
+  late TextEditingController _currentValueController;
+  late TextEditingController _targetValueController;
   String _selectedFrequency = 'Weekly';
+
+  @override
+  void initState() {
+    super.initState();
+    _metricController = TextEditingController();
+    _currentValueController = TextEditingController();
+    _targetValueController = TextEditingController();
+    
+    // Parse existing data if needed, but for simplicity let's just initialize empty
+    // since measurable string will be complex.
+  }
+
+  void _updateMeasurable() {
+    final metric = _metricController.text;
+    final curr = _currentValueController.text.isNotEmpty ? _currentValueController.text : '0';
+    final target = _targetValueController.text;
+    
+    if (metric.isNotEmpty && target.isNotEmpty) {
+      final measurableString = 'Increase $metric from $curr to $target ($_selectedFrequency)';
+      context.read<GoalProvider>().setMeasurable(measurableString);
+    }
+  }
+
+  @override
+  void dispose() {
+    _metricController.dispose();
+    _currentValueController.dispose();
+    _targetValueController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +196,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                                 ),
                                 const SizedBox(height: 8),
                                 _buildTextField(
+                                  controller: _metricController,
                                   hint: 'Enter metric name',
                                   icon: Icons.show_chart,
                                 ),
@@ -169,6 +206,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                                 _buildLabel('Current Value (Optional)'),
                                 const SizedBox(height: 8),
                                 _buildTextField(
+                                  controller: _currentValueController,
                                   hint: '0',
                                   icon: Icons.compare_arrows,
                                   keyboardType: TextInputType.number,
@@ -179,6 +217,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                                 _buildLabel('Target Value'),
                                 const SizedBox(height: 8),
                                 _buildTextField(
+                                  controller: _targetValueController,
                                   hint: '100',
                                   icon: Icons.flag_outlined,
                                   keyboardType: TextInputType.number,
@@ -235,6 +274,12 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                       variant: AppButtonVariant.primary,
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       onPressed: () {
+                        if (_metricController.text.trim().isEmpty || _targetValueController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please define your primary metric and target value.')),
+                          );
+                          return;
+                        }
                         context.push(AppRoutes.onboardingAchievable);
                       },
                     ),
@@ -258,8 +303,10 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
     );
   }
 
-  Widget _buildTextField({required String hint, required IconData icon, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, TextInputType keyboardType = TextInputType.text}) {
     return TextField(
+      controller: controller,
+      onChanged: (_) => _updateMeasurable(),
       keyboardType: keyboardType,
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
@@ -288,6 +335,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
         setState(() {
           _selectedFrequency = label;
         });
+        _updateMeasurable();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

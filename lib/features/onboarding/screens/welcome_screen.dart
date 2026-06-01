@@ -158,7 +158,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                       color: Colors.white,
                                     ),
                                     onPressed: () {
-                                      context.push(AppRoutes.goalSummary);
+                                      context.push(AppRoutes.login);
                                     },
                                   ),
                                 ),
@@ -200,7 +200,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Nexus Digital Solutions',
+                    'EssenciaTechno',
                     style: AppTypography.labelMedium.copyWith(
                       fontSize: 13,
                       color: AppColors.neutral,

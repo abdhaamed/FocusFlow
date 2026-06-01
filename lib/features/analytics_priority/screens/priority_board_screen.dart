@@ -1,39 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/main_bottom_nav.dart';
+import '../../../core/providers/task_provider.dart';
+import '../../../core/models/task_model.dart';
 
 // ── Data Model ─────────────────────────────────────────────────────────────────
 
 enum Quadrant { doItNow, schedule, delegate, drop }
-
-class PriorityTask {
-  final String id;
-  final String title;
-  final String? subtitle;
-  final bool isCalendarIcon;
-  final bool subtitleIconInstead;
-  final String? tag;
-  final Color? tagColor;
-  final Color? tagTextColor;
-  final String? avatarLabel;
-  bool isDone;
-  Quadrant quadrant;
-
-  PriorityTask({
-    required this.id,
-    required this.title,
-    this.subtitle,
-    this.isCalendarIcon = false,
-    this.subtitleIconInstead = true,
-    this.tag,
-    this.tagColor,
-    this.tagTextColor,
-    this.avatarLabel,
-    this.isDone = false,
-    required this.quadrant,
-  });
-}
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -47,64 +22,39 @@ class PriorityBoardScreen extends StatefulWidget {
 class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
   bool isGridActive = true;
 
-  // Centralised task list — single source of truth
-  final List<PriorityTask> _tasks = [
-    PriorityTask(
-      id: 'q1_1',
-      title: 'Finalize Q3 Board Deck',
-      subtitle: '2:00 PM',
-      tag: 'High Impact',
-      tagColor: Colors.red.shade50,
-      tagTextColor: Colors.red.shade700,
-      quadrant: Quadrant.doItNow,
-    ),
-    PriorityTask(
-      id: 'q1_2',
-      title: 'Approve Payroll Run',
-      subtitle: 'Today',
-      quadrant: Quadrant.doItNow,
-    ),
-    PriorityTask(
-      id: 'q2_1',
-      title: 'Draft 2024 Roadmap',
-      subtitle: 'Next Week',
-      isCalendarIcon: true,
-      tag: 'Strategy',
-      tagColor: const Color(0xFFF3F4F6),
-      tagTextColor: AppColors.neutral,
-      quadrant: Quadrant.schedule,
-    ),
-    PriorityTask(
-      id: 'q2_2',
-      title: '1:1 with Design Team',
-      subtitle: 'Tomorrow',
-      isCalendarIcon: true,
-      quadrant: Quadrant.schedule,
-    ),
-    PriorityTask(
-      id: 'q3_1',
-      title: 'Book Flights for Conf',
-      avatarLabel: 'Assigned to Sarah',
-      quadrant: Quadrant.delegate,
-    ),
-    PriorityTask(
-      id: 'q4_1',
-      title: 'Review old feature requests',
-      subtitle: 'Backlog',
-      subtitleIconInstead: false,
-      quadrant: Quadrant.drop,
-    ),
-  ];
-
-  List<PriorityTask> _tasksFor(Quadrant q) =>
-      _tasks.where((t) => t.quadrant == q).toList();
-
-  void _moveTask(PriorityTask task, Quadrant target) {
-    setState(() => task.quadrant = target);
+  Quadrant _mapLabelToQuadrant(String label) {
+    switch (label) {
+      case 'Q1': return Quadrant.doItNow;
+      case 'Q2': return Quadrant.schedule;
+      case 'Q3': return Quadrant.delegate;
+      case 'Q4': return Quadrant.drop;
+      default: return Quadrant.drop; // Fallback for no-label tasks
+    }
   }
 
-  void _toggleDone(PriorityTask task) {
-    setState(() => task.isDone = !task.isDone);
+  String _mapQuadrantToLabel(Quadrant quadrant) {
+    switch (quadrant) {
+      case Quadrant.doItNow: return 'Q1';
+      case Quadrant.schedule: return 'Q2';
+      case Quadrant.delegate: return 'Q3';
+      case Quadrant.drop: return 'Q4';
+    }
+  }
+
+  List<TaskModel> _tasksFor(List<TaskModel> tasks, Quadrant q) {
+    return tasks.where((t) => _mapLabelToQuadrant(t.priorityLabel) == q).toList();
+  }
+
+  void _moveTask(TaskModel task, Quadrant target) {
+    final taskProvider = context.read<TaskProvider>();
+    final newLabel = _mapQuadrantToLabel(target);
+    taskProvider.updateTaskPriority(task.id, newLabel);
+  }
+
+  void _toggleDone(TaskModel task) {
+    final taskProvider = context.read<TaskProvider>();
+    final newStatus = task.status == TaskStatus.done ? TaskStatus.todo : TaskStatus.done;
+    taskProvider.updateTaskStatus(task.id, newStatus);
   }
 
   // ── Quadrant config ─────────────────────────────────────────────────────────
@@ -170,53 +120,58 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final taskProvider = context.watch<TaskProvider>();
+    final allTasks = taskProvider.tasks;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Priority Board',
-              style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.primary,
-                fontSize: 24,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Eisenhower Matrix',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.neutral,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildToggleButton(),
-            const SizedBox(height: 24),
+      body: taskProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Priority Board',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.primary,
+                      fontSize: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Eisenhower Matrix',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.neutral,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildToggleButton(),
+                  const SizedBox(height: 24),
 
-            // Four quadrants
-            for (final q in Quadrant.values) ...[
-              _buildQuadrantSection(q),
-              const SizedBox(height: 20),
-            ],
-          ],
-        ),
-      ),
+                  // Four quadrants
+                  for (final q in Quadrant.values) ...[
+                    _buildQuadrantSection(q, allTasks),
+                    const SizedBox(height: 20),
+                  ],
+                ],
+              ),
+            ),
       bottomNavigationBar: const MainBottomNav(currentIndex: 2),
     );
   }
 
   // ── Quadrant section with DragTarget ──────────────────────────────────────
 
-  Widget _buildQuadrantSection(Quadrant quadrant) {
+  Widget _buildQuadrantSection(Quadrant quadrant, List<TaskModel> allTasks) {
     final cfg = _config(quadrant);
-    final tasks = _tasksFor(quadrant);
+    final tasks = _tasksFor(allTasks, quadrant);
 
-    return DragTarget<PriorityTask>(
-      onWillAcceptWithDetails: (details) => details.data.quadrant != quadrant,
+    return DragTarget<TaskModel>(
+      onWillAcceptWithDetails: (details) => _mapLabelToQuadrant(details.data.priorityLabel) != quadrant,
       onAcceptWithDetails: (details) => _moveTask(details.data, quadrant),
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
@@ -312,14 +267,14 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
 
   // ── Draggable task card ───────────────────────────────────────────────────
 
-  Widget _buildDraggableTask(PriorityTask task, _QuadrantConfig cfg) {
+  Widget _buildDraggableTask(TaskModel task, _QuadrantConfig cfg) {
     final card = _TaskCard(
       task: task,
       cfg: cfg,
       onToggleDone: () => _toggleDone(task),
     );
 
-    return LongPressDraggable<PriorityTask>(
+    return LongPressDraggable<TaskModel>(
       data: task,
       delay: const Duration(milliseconds: 300),
       feedback: Material(
@@ -491,7 +446,7 @@ class _QuadrantConfig {
 // ── Task card widget ──────────────────────────────────────────────────────────
 
 class _TaskCard extends StatelessWidget {
-  final PriorityTask task;
+  final TaskModel task;
   final _QuadrantConfig cfg;
   final VoidCallback onToggleDone;
 
@@ -503,17 +458,18 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDisabled = task.quadrant == Quadrant.drop;
+    final isDisabled = task.priorityLabel == 'Q4';
+    final isDone = task.status == TaskStatus.done;
 
     final titleStyle = AppTypography.bodyMedium.copyWith(
-      color: task.isDone
+      color: isDone
           ? AppColors.neutral.withOpacity(0.5)
           : isDisabled
           ? AppColors.neutral.withOpacity(0.7)
           : AppColors.primary,
       fontWeight: FontWeight.w600,
       fontSize: 14,
-      decoration: task.isDone ? TextDecoration.lineThrough : null,
+      decoration: isDone ? TextDecoration.lineThrough : null,
     );
 
     return Container(
@@ -533,7 +489,7 @@ class _TaskCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              left: BorderSide(color: cfg.leftBorderColor, width: 4),
+              left: BorderSide(color: task.leftBorderColor, width: 4),
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -551,22 +507,20 @@ class _TaskCard extends StatelessWidget {
                   children: [
                     Text(task.title, style: titleStyle),
                     if (task.subtitle != null ||
-                        task.tag != null ||
-                        task.avatarLabel != null) ...[
+                        task.tagLabel != null ||
+                        task.hasAvatars) ...[
                       const SizedBox(height: 6),
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 8,
                         children: [
                           // Subtitle with icon
-                          if (task.subtitle != null && task.subtitleIconInstead)
+                          if (task.subtitle != null && task.subtitleIcon != null)
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  task.isCalendarIcon
-                                      ? Icons.calendar_today
-                                      : Icons.access_time,
+                                  task.subtitleIcon,
                                   size: 12,
                                   color: AppColors.neutral,
                                 ),
@@ -581,8 +535,7 @@ class _TaskCard extends StatelessWidget {
                               ],
                             ),
                           // Subtitle plain text
-                          if (task.subtitle != null &&
-                              !task.subtitleIconInstead)
+                          if (task.subtitle != null && task.subtitleIcon == null)
                             Text(
                               task.subtitle!,
                               style: AppTypography.labelMedium.copyWith(
@@ -591,7 +544,7 @@ class _TaskCard extends StatelessWidget {
                               ),
                             ),
                           // Dot separator
-                          if (task.subtitle != null && task.tag != null)
+                          if (task.subtitle != null && task.tagLabel != null)
                             Container(
                               width: 3,
                               height: 3,
@@ -601,29 +554,29 @@ class _TaskCard extends StatelessWidget {
                               ),
                             ),
                           // Tag badge
-                          if (task.tag != null)
+                          if (task.tagLabel != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 6,
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: task.tagColor,
+                                color: task.priorityColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: task.tagTextColor!.withOpacity(0.2),
+                                  color: task.priorityColor.withOpacity(0.2),
                                 ),
                               ),
                               child: Text(
-                                task.tag!,
+                                task.tagLabel!,
                                 style: AppTypography.labelMedium.copyWith(
-                                  color: task.tagTextColor,
+                                  color: task.priorityColor,
                                   fontSize: 10,
                                 ),
                               ),
                             ),
                           // Avatar label
-                          if (task.avatarLabel != null)
+                          if (task.hasAvatars)
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -638,7 +591,7 @@ class _TaskCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  task.avatarLabel!,
+                                  'Assigned',
                                   style: AppTypography.labelMedium.copyWith(
                                     color: AppColors.neutral,
                                     fontSize: 11,
@@ -662,17 +615,17 @@ class _TaskCard extends StatelessWidget {
                   height: 24,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: task.isDone
+                    color: isDone
                         ? cfg.leftBorderColor
                         : Colors.transparent,
                     border: Border.all(
-                      color: task.isDone
+                      color: isDone
                           ? cfg.leftBorderColor
                           : Colors.grey.shade400,
                       width: 1.5,
                     ),
                   ),
-                  child: task.isDone
+                  child: isDone
                       ? const Icon(Icons.check, size: 14, color: Colors.white)
                       : null,
                 ),
@@ -684,3 +637,4 @@ class _TaskCard extends StatelessWidget {
     );
   }
 }
+

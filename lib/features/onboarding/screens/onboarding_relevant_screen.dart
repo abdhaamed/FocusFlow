@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/progress_bar.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/goal_provider.dart';
 
 class OnboardingRelevantScreen extends StatefulWidget {
   const OnboardingRelevantScreen({super.key});
@@ -14,6 +16,8 @@ class OnboardingRelevantScreen extends StatefulWidget {
 }
 
 class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
+  late TextEditingController _visionController;
+  late TextEditingController _timingController;
   final Set<String> _selectedValues = {'Financial Stability'};
 
   final List<String> _valuesList = [
@@ -22,6 +26,29 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
     'Skill Mastery',
     'Health & Wellbeing',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _visionController = TextEditingController();
+    _timingController = TextEditingController();
+  }
+
+  void _updateRelevant() {
+    final vision = _visionController.text;
+    final timing = _timingController.text;
+    final valuesStr = _selectedValues.join(', ');
+    
+    final relevantString = 'Vision: $vision\nTiming: $timing\nValues: $valuesStr';
+    context.read<GoalProvider>().setRelevant(relevantString);
+  }
+
+  @override
+  void dispose() {
+    _visionController.dispose();
+    _timingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +146,7 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
                     _buildCard(
                       title: 'How does this align with your long-term vision?',
                       child: _buildTextField(
+                        controller: _visionController,
                         hint: 'e.g., It\'s a stepping stone to my desired career transition...',
                         maxLines: 3,
                       ),
@@ -129,6 +157,7 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
                     _buildCard(
                       title: 'Why is this the right time to focus on this?',
                       child: _buildTextField(
+                        controller: _timingController,
                         hint: 'e.g., The market trends support this direction...',
                         maxLines: 3,
                       ),
@@ -172,6 +201,12 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
                       variant: AppButtonVariant.primary,
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       onPressed: () {
+                        if (_visionController.text.trim().isEmpty || _timingController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please answer both questions to ensure your goal is relevant.')),
+                          );
+                          return;
+                        }
                         context.push(AppRoutes.onboardingTimebound);
                       },
                     ),
@@ -217,8 +252,10 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
     );
   }
 
-  Widget _buildTextField({required String hint, required int maxLines}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required int maxLines}) {
     return TextField(
+      controller: controller,
+      onChanged: (_) => _updateRelevant(),
       maxLines: maxLines,
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
@@ -254,6 +291,7 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
                 _selectedValues.add(val);
               }
             });
+            _updateRelevant();
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

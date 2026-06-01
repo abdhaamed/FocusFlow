@@ -7,6 +7,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/progress_bar.dart';
 
+import 'package:provider/provider.dart';
+import '../../../core/providers/goal_provider.dart';
+
 class OnboardingTimeboundScreen extends StatefulWidget {
   const OnboardingTimeboundScreen({super.key});
 
@@ -15,8 +18,8 @@ class OnboardingTimeboundScreen extends StatefulWidget {
 }
 
 class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
-  DateTime _selectedDate = DateTime(2024, 10, 15);
-  String? _selectedQuick = 'End of Q4';
+  late DateTime _selectedDate;
+  String? _selectedQuick;
 
   final List<String> _quickOptions = [
     'End of Week',
@@ -24,6 +27,28 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
     'End of Q4',
     '1 Year',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final goalProvider = Provider.of<GoalProvider>(context, listen: false);
+    _selectedDate = goalProvider.timebound ?? DateTime.now().add(const Duration(days: 30));
+    _selectedQuick = null;
+    
+    // Set initial value to provider
+    Future.microtask(() {
+      if (mounted) {
+        context.read<GoalProvider>().setTimebound(_selectedDate);
+      }
+    });
+  }
+
+  void _updateDate(DateTime newDate) {
+    setState(() {
+      _selectedDate = newDate;
+    });
+    context.read<GoalProvider>().setTimebound(newDate);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,8 +209,8 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                                       firstDate: DateTime(2000),
                                       lastDate: DateTime(2100),
                                       onDateChanged: (newDate) {
+                                        _updateDate(newDate);
                                         setState(() {
-                                          _selectedDate = newDate;
                                           _selectedQuick = null; // Clear quick select when manually picking
                                         });
                                       },
@@ -243,6 +268,18 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                                       onTap: () {
                                         setState(() {
                                           _selectedQuick = option;
+                                          
+                                          // Update date based on quick select
+                                          final now = DateTime.now();
+                                          if (option == 'End of Week') {
+                                            _updateDate(now.add(Duration(days: 7 - now.weekday)));
+                                          } else if (option == 'End of Month') {
+                                            _updateDate(DateTime(now.year, now.month + 1, 0));
+                                          } else if (option == 'End of Q4') {
+                                            _updateDate(DateTime(now.year, 12, 31));
+                                          } else if (option == '1 Year') {
+                                            _updateDate(DateTime(now.year + 1, now.month, now.day));
+                                          }
                                         });
                                       },
                                       child: Container(
@@ -332,8 +369,19 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                       label: 'Launch',
                       variant: AppButtonVariant.primary,
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
-                      onPressed: () {
-                        context.go(AppRoutes.home);
+                      onPressed: () async {
+                        try {
+                          await context.read<GoalProvider>().savePrimaryGoal();
+                          if (context.mounted) {
+                            context.go(AppRoutes.home);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to save goal: $e')),
+                            );
+                          }
+                        }
                       },
                     ),
                   ),

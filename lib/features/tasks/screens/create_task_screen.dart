@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/task_provider.dart';
@@ -26,9 +27,11 @@ class CreateTaskSheet extends StatefulWidget {
 }
 
 class _CreateTaskSheetState extends State<CreateTaskSheet> {
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _deadlineController = TextEditingController();
+  DateTime? _selectedDeadline;
 
   double _urgency = 5.0;
   double _importance = 4.0;
@@ -42,18 +45,77 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
   }
 
   void _createTask() {
-    if (_titleController.text.trim().isEmpty) return;
+    if (!_formKey.currentState!.validate()) {
+      return; // Invalid form
+    }
 
     final newTask = TaskModel.create(
       title: _titleController.text.trim(),
-      description: _descriptionController.text.trim(),
-      deadline: _deadlineController.text.trim(),
+      description: _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
+      deadline: _deadlineController.text.trim().isNotEmpty ? _deadlineController.text.trim() : null,
       urgency: _urgency,
       importance: _importance,
     );
 
     context.read<TaskProvider>().addTask(newTask);
     Navigator.of(context).pop();
+  }
+
+  Future<void> _pickDeadline() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDeadline ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.neutral,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      if (!mounted) return;
+      final pickedTime = await showTimePicker(
+        context: context,
+        initialTime: _selectedDeadline != null
+            ? TimeOfDay.fromDateTime(_selectedDeadline!)
+            : TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: AppColors.primary,
+                onPrimary: Colors.white,
+                onSurface: AppColors.neutral,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _selectedDeadline = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          _deadlineController.text =
+              DateFormat('MMM dd, yyyy - hh:mm a').format(_selectedDeadline!);
+        });
+      }
+    }
   }
 
   // ── Computed Placement ──────────────────────────────────────────────────────
@@ -173,138 +235,156 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Form card ──────────────────────────────────────────────
-                  _card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Task Title'),
-                        _field(
-                          hint: 'e.g. Prepare Q3 Financial Report',
-                          controller: _titleController,
-                        ),
-                        const SizedBox(height: 18),
-                        _label('Description (Optional)'),
-                        _field(
-                          hint: 'Add details or context here...',
-                          controller: _descriptionController,
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 18),
-                        _label('Deadline'),
-                        _deadlineField(),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Matrix Assessment header
-                  Text(
-                    'Matrix Assessment',
-                    style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // ── Sliders card
-                  _card(
-                    child: Column(
-                      children: [
-                        _sliderRow(
-                          icon: Icons.timer_outlined,
-                          iconColor: const Color(0xFFB91C1C),
-                          title: 'Urgency',
-                          value: _urgency,
-                          badgeBg: _urgencyBadgeBg(_urgency),
-                          badgeFg: _urgencyBadgeFg(_urgency),
-                          badgeText: '${_badgeText(_urgency)} (${_urgency.toInt()}/5)',
-                          onChanged: (v) => setState(() => _urgency = v),
-                        ),
-                        const SizedBox(height: 28),
-                        _sliderRow(
-                          icon: Icons.stars_rounded,
-                          iconColor: AppColors.primary,
-                          title: 'Importance',
-                          value: _importance,
-                          badgeBg: const Color(0xFFE0E7FF),
-                          badgeFg: AppColors.primary,
-                          badgeText: '${_badgeText(_importance)} (${_importance.toInt()}/5)',
-                          onChanged: (v) => setState(() => _importance = v),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ── Predicted placement card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _placementBgColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _placementBorderColor),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: _placementColor.withOpacity(0.12),
-                            shape: BoxShape.circle,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Form card ──────────────────────────────────────────────
+                    _card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Task Title *'),
+                          _field(
+                            hint: 'e.g. Prepare Q3 Financial Report',
+                            controller: _titleController,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Task title is required';
+                              }
+                              if (value.trim().length < 3) {
+                                return 'Title must be at least 3 characters long';
+                              }
+                              return null;
+                            },
                           ),
-                          child: Icon(_placementIcon, color: _placementColor, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Predicted Placement',
-                                style: AppTypography.headlineMedium.copyWith(
-                                  color: AppColors.primary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              RichText(
-                                text: TextSpan(
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.neutral,
-                                    fontSize: 12,
-                                    height: 1.5,
+                          const SizedBox(height: 18),
+                          _label('Description (Optional)'),
+                          _field(
+                            hint: 'Add details or context here...',
+                            controller: _descriptionController,
+                            maxLines: 3,
+                            validator: (value) {
+                              if (value != null && value.length > 500) {
+                                return 'Description cannot exceed 500 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                          _label('Deadline (Optional)'),
+                          _deadlineField(),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Matrix Assessment header
+                    Text(
+                      'Matrix Assessment',
+                      style: AppTypography.headlineMedium.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Sliders card
+                    _card(
+                      child: Column(
+                        children: [
+                          _sliderRow(
+                            icon: Icons.timer_outlined,
+                            iconColor: const Color(0xFFB91C1C),
+                            title: 'Urgency',
+                            value: _urgency,
+                            badgeBg: _urgencyBadgeBg(_urgency),
+                            badgeFg: _urgencyBadgeFg(_urgency),
+                            badgeText: '${_badgeText(_urgency)} (${_urgency.toInt()}/5)',
+                            onChanged: (v) => setState(() => _urgency = v),
+                          ),
+                          const SizedBox(height: 28),
+                          _sliderRow(
+                            icon: Icons.stars_rounded,
+                            iconColor: AppColors.primary,
+                            title: 'Importance',
+                            value: _importance,
+                            badgeBg: const Color(0xFFE0E7FF),
+                            badgeFg: AppColors.primary,
+                            badgeText: '${_badgeText(_importance)} (${_importance.toInt()}/5)',
+                            onChanged: (v) => setState(() => _importance = v),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Predicted placement card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _placementBgColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _placementBorderColor),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _placementColor.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(_placementIcon, color: _placementColor, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Predicted Placement',
+                                  style: AppTypography.headlineMedium.copyWith(
+                                    color: AppColors.primary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                  children: [
-                                    const TextSpan(text: 'This task will be placed in: '),
-                                    TextSpan(
-                                      text: _placementTitle,
-                                      style: TextStyle(
-                                        color: _placementColor,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    TextSpan(text: '. $_placementDescription'),
-                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                RichText(
+                                  text: TextSpan(
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.neutral,
+                                      fontSize: 12,
+                                      height: 1.5,
+                                    ),
+                                    children: [
+                                      const TextSpan(text: 'This task will be placed in: '),
+                                      TextSpan(
+                                        text: _placementTitle,
+                                        style: TextStyle(
+                                          color: _placementColor,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      TextSpan(text: '. $_placementDescription'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -406,62 +486,83 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     required String hint,
     TextEditingController? controller,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: AppTypography.bodyMedium.copyWith(
+        color: AppColors.primary,
+        fontSize: 14,
       ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: AppTypography.bodyMedium.copyWith(
-          color: AppColors.primary,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.neutral.withOpacity(0.5),
           fontSize: 14,
         ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: AppTypography.bodyMedium.copyWith(
-            color: AppColors.neutral.withOpacity(0.5),
-            fontSize: 14,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        filled: true,
+        fillColor: const Color(0xFFF9FAFB),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
         ),
       ),
     );
   }
 
   Widget _deadlineField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+    return TextFormField(
+      controller: _deadlineController,
+      readOnly: true, // Prevent manual typing
+      onTap: _pickDeadline,
+      style: AppTypography.bodyMedium.copyWith(
+        color: AppColors.primary,
+        fontSize: 14,
       ),
-      child: TextField(
-        controller: _deadlineController,
-        style: AppTypography.bodyMedium.copyWith(
-          color: AppColors.primary,
+      decoration: InputDecoration(
+        hintText: 'Select Date & Time',
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.neutral.withOpacity(0.5),
           fontSize: 14,
         ),
-        decoration: InputDecoration(
-          hintText: 'mm/dd/yyyy, --:-- --',
-          hintStyle: AppTypography.bodyMedium.copyWith(
-            color: AppColors.neutral.withOpacity(0.5),
-            fontSize: 14,
+        filled: true,
+        fillColor: const Color(0xFFF9FAFB),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Icon(
+            Icons.calendar_today_outlined,
+            color: AppColors.neutral.withOpacity(0.6),
+            size: 18,
           ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(
-              Icons.calendar_today_outlined,
-              color: AppColors.neutral.withOpacity(0.6),
-              size: 18,
-            ),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );
@@ -559,3 +660,4 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     );
   }
 }
+
