@@ -20,7 +20,7 @@ FocusFlow is a mobile productivity application built with Flutter that guides us
 |------|--------|------|
 | **Hamid** | [@hamid](https://github.com/) | Core, Home, Shared Widgets |
 | **Louis** | [@louis](https://github.com/) | Onboarding Flow |
-| **Raja** | [@raja](https://github.com/) | Tasks Feature |
+| **Raja** | [@raja](https://github.com/rajafadhil) | Tasks Feature |
 | **Octaf** | [@octaf](https://github.com/) | Priority Board & Analytics |
 
 ---
