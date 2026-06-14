@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/main_bottom_nav.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/task_provider.dart';
+import '../../../core/models/task_model.dart';
 import 'create_task_screen.dart';
 
 class TasksScreen extends StatelessWidget {
@@ -124,17 +125,7 @@ class TasksScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ...provider.todoTasks.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(
-                            title: task.title,
-                            subtitleIcon: task.subtitleIcon ?? Icons.access_time, // Fallback
-                            subtitleText: task.subtitle ?? '',
-                            subtitleColor: task.subtitleColor ?? AppColors.neutral,
-                            tagLabel: task.tagLabel,
-                            avatars: task.hasAvatars,
-                            priorityLabel: task.priorityLabel,
-                            priorityColor: task.priorityColor,
-                            leftBorderColor: task.leftBorderColor,
-                          ),
+                          child: _buildSlidableTaskCard(context, provider, task),
                         )),
                     const SizedBox(height: 32),
 
@@ -143,17 +134,7 @@ class TasksScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ...provider.inProgressTasks.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(
-                            title: task.title,
-                            subtitleIcon: task.subtitleIcon ?? Icons.access_time,
-                            subtitleText: task.subtitle ?? '',
-                            subtitleColor: task.subtitleColor ?? AppColors.neutral,
-                            tagLabel: task.tagLabel,
-                            avatars: task.hasAvatars,
-                            priorityLabel: task.priorityLabel,
-                            priorityColor: task.priorityColor,
-                            leftBorderColor: task.leftBorderColor,
-                          ),
+                          child: _buildSlidableTaskCard(context, provider, task),
                         )),
                     const SizedBox(height: 32),
 
@@ -162,7 +143,7 @@ class TasksScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ...provider.doneTasks.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildDoneTaskCard(task.title),
+                          child: _buildDoneTaskCard(context, provider, task),
                         )),
                     const SizedBox(height: 40), // Padding for FAB
                   ],
@@ -392,38 +373,34 @@ class TasksScreen extends StatelessWidget {
   }
 
   // To simulate the exact layout from the image which shows items mid-swipe.
-  Widget _buildSlidableTaskCard({
-    required String title,
-    required IconData subtitleIcon,
-    required String subtitleText,
-    required Color subtitleColor,
-    String? tagLabel,
-    bool avatars = false,
-    required String priorityLabel,
-    required Color priorityColor,
-    required Color leftBorderColor,
-  }) {
+  Widget _buildSlidableTaskCard(BuildContext context, TaskProvider provider, TaskModel task) {
     final innerCard = _buildTaskCard(
-      title: title,
-      subtitleIcon: subtitleIcon,
-      subtitleText: subtitleText,
-      subtitleColor: subtitleColor,
-      tagLabel: tagLabel,
-      avatars: avatars,
-      priorityLabel: priorityLabel,
-      priorityColor: priorityColor,
-      leftBorderColor: leftBorderColor,
+      title: task.title,
+      subtitleIcon: task.subtitleIcon ?? Icons.access_time,
+      subtitleText: task.subtitle ?? '',
+      subtitleColor: task.subtitleColor ?? AppColors.neutral,
+      tagLabel: task.tagLabel,
+      avatars: task.hasAvatars,
+      priorityLabel: task.priorityLabel,
+      priorityColor: task.priorityColor,
+      leftBorderColor: task.leftBorderColor,
     );
 
     // Using real Slidable to make it actually work!
     return Slidable(
-      key: ValueKey(title),
+      key: ValueKey(task.id),
       startActionPane: ActionPane(
         motion: const ScrollMotion(),
         extentRatio: 0.25,
         children: [
           SlidableAction(
-            onPressed: (context) {},
+            onPressed: (context) {
+              if (task.status == TaskStatus.todo) {
+                provider.updateTaskStatus(task.id, TaskStatus.inProgress);
+              } else if (task.status == TaskStatus.inProgress) {
+                provider.updateTaskStatus(task.id, TaskStatus.done);
+              }
+            },
             backgroundColor: Colors.green.shade600,
             foregroundColor: Colors.white,
             icon: Icons.check,
@@ -436,7 +413,7 @@ class TasksScreen extends StatelessWidget {
         extentRatio: 0.25,
         children: [
           SlidableAction(
-            onPressed: (context) {},
+            onPressed: (context) => provider.deleteTask(task.id),
             backgroundColor: Colors.red.shade700,
             foregroundColor: Colors.white,
             icon: Icons.delete_outline,
@@ -448,32 +425,48 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDoneTaskCard(String title) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+  Widget _buildDoneTaskCard(BuildContext context, TaskProvider provider, TaskModel task) {
+    return Slidable(
+      key: ValueKey(task.id),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        extentRatio: 0.25,
+        children: [
+          SlidableAction(
+            onPressed: (context) => provider.deleteTask(task.id),
+            backgroundColor: Colors.red.shade700,
+            foregroundColor: Colors.white,
+            icon: Icons.delete_outline,
+            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.grey, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: Colors.grey.shade400,
-                  decoration: TextDecoration.lineThrough,
-                  fontSize: 14,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.grey, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  task.title,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.grey.shade400,
+                    decoration: TextDecoration.lineThrough,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
