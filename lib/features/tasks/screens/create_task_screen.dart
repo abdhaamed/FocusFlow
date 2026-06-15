@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/task_provider.dart';
+import '../../../core/providers/goal_provider.dart';
 import '../../../core/models/task_model.dart';
 
 /// Call this static method from anywhere to show the Create Task bottom sheet.
@@ -15,8 +16,11 @@ class CreateTaskSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ChangeNotifierProvider.value(
-        value: context.read<TaskProvider>(),
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: context.read<TaskProvider>()),
+          ChangeNotifierProvider.value(value: context.read<GoalProvider>()),
+        ],
         child: const CreateTaskSheet(),
       ),
     );
@@ -32,6 +36,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
   final _descriptionController = TextEditingController();
   final _deadlineController = TextEditingController();
   DateTime? _selectedDeadline;
+  String? _selectedGoalId;
 
   double _urgency = 5.0;
   double _importance = 4.0;
@@ -52,9 +57,10 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     final newTask = TaskModel.create(
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
-      deadline: _deadlineController.text.trim().isNotEmpty ? _deadlineController.text.trim() : null,
+      deadline: _selectedDeadline,
       urgency: _urgency,
       importance: _importance,
+      goalId: _selectedGoalId,
     );
 
     context.read<TaskProvider>().addTask(newTask);
@@ -279,6 +285,67 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                       ),
                     ),
 
+                    const SizedBox(height: 24),
+
+                    // ── Linked Goal ──────────────────────────────────────────────
+                    Text(
+                      'Linked Goal (Optional)',
+                      style: AppTypography.headlineMedium.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _card(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedGoalId,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF9FAFB),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        hint: Text(
+                          'Select a Goal',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.neutral.withOpacity(0.5),
+                            fontSize: 14,
+                          ),
+                        ),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.neutral),
+                        isExpanded: true,
+                        items: [
+                          DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('None', style: AppTypography.bodyMedium.copyWith(color: AppColors.primary)),
+                          ),
+                          ...context.watch<GoalProvider>().goals.map((goal) {
+                            return DropdownMenuItem<String>(
+                              value: goal.id,
+                              child: Text(
+                                goal.primaryObjective, 
+                                style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedGoalId = value;
+                          });
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 24),
 
                     // ── Matrix Assessment header

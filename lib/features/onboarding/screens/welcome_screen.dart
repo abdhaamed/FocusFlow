@@ -24,8 +24,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         // Ensure the first frame is shown after the video is initialized
         setState(() {});
       })
-      ..setLooping(true)
       ..play();
+
+    // Custom loop logic to prevent black flash on Android
+    _controller.addListener(() {
+      final value = _controller.value;
+      if (value.isInitialized) {
+        final duration = value.duration.inMilliseconds;
+        final position = value.position.inMilliseconds;
+        
+        // Seek to start just before the video ends to avoid the black EOF flash
+        if (duration > 0 && position >= duration - 80) {
+          _controller.seekTo(Duration.zero);
+          _controller.play();
+        }
+      }
+    });
   }
 
   @override

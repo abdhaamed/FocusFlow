@@ -371,7 +371,7 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                       trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       onPressed: () async {
                         try {
-                          await context.read<GoalProvider>().savePrimaryGoal();
+                          await context.read<GoalProvider>().addGoal();
                           if (context.mounted) {
                             context.go(AppRoutes.home);
                           }

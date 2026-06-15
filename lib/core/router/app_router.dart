@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../constants/app_constants.dart';
+import '../theme/app_colors.dart';
 import '../../features/analytics_priority/screens/analytics_screen.dart';
 import '../../features/analytics_priority/screens/priority_board_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/goal_detail_screen.dart';
+import '../../shared/widgets/main_bottom_nav.dart';
 import '../../features/onboarding/screens/goal_summary_screen.dart';
 import '../../features/onboarding/screens/onboarding_achievable_screen.dart';
 import '../../features/onboarding/screens/onboarding_measurable_screen.dart';
@@ -16,7 +18,6 @@ import '../../features/onboarding/screens/onboarding_relevant_screen.dart';
 import '../../features/onboarding/screens/onboarding_specific_screen.dart';
 import '../../features/onboarding/screens/onboarding_timebound_screen.dart';
 import '../../features/onboarding/screens/welcome_screen.dart';
-import '../../features/tasks/screens/task_detail_screen.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
@@ -59,8 +60,8 @@ class AppRouter {
             return AppRoutes.goalSummary;
           }
 
-          // If they HAVE completed onboarding, and try to access public/onboarding routes, send to home
-          if (hasCompletedOnboarding && (isPublicRoute || isOnboardingRoute)) {
+          // If they HAVE completed onboarding, and try to access public routes, send to home
+          if (hasCompletedOnboarding && isPublicRoute) {
             return AppRoutes.home;
           }
         }
@@ -108,40 +109,142 @@ class AppRouter {
           path: AppRoutes.goalDetail,
           builder: (context, state) => const GoalDetailScreen(),
         ),
-        GoRoute(
-          path: AppRoutes.home,
-          builder: (context, state) => const HomeScreen(),
-        ),
-        GoRoute(
-          path: AppRoutes.tasks,
-          builder: (context, state) => const TasksScreen(),
-        ),
-        GoRoute(
-          path: AppRoutes.createTask,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Use the + button on Tasks screen')),
-          ),
-        ),
-        GoRoute(
-          path: AppRoutes.taskDetail,
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return TaskDetailScreen(taskId: id);
+        StatefulShellRoute(
+          navigatorContainerBuilder: (context, navigationShell, children) {
+            return AnimatedBranchContainer(
+              currentIndex: navigationShell.currentIndex,
+              children: children,
+            );
           },
-        ),
-        GoRoute(
-          path: AppRoutes.analytics,
-          builder: (context, state) => const AnalyticsScreen(),
-        ),
-        GoRoute(
-          path: AppRoutes.priority,
-          builder: (context, state) => const PriorityBoardScreen(),
+          builder: (context, state, navigationShell) {
+            return Scaffold(
+              backgroundColor: AppColors.background,
+              body: navigationShell,
+              bottomNavigationBar: MainBottomNav(navigationShell: navigationShell),
+            );
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutes.home,
+                  builder: (context, state) => const HomeScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutes.tasks,
+                  builder: (context, state) => const TasksScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutes.priority,
+                  builder: (context, state) => const PriorityBoardScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: AppRoutes.analytics,
+                  builder: (context, state) => const AnalyticsScreen(),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: AppRoutes.profile,
           builder: (context, state) => const ProfileScreen(),
         ),
       ],
+    );
+  }
+}
+
+class AnimatedBranchContainer extends StatefulWidget {
+  const AnimatedBranchContainer({
+    super.key,
+    required this.currentIndex,
+    required this.children,
+  });
+
+  final int currentIndex;
+  final List<Widget> children;
+
+  @override
+  State<AnimatedBranchContainer> createState() => _AnimatedBranchContainerState();
+}
+
+class _AnimatedBranchContainerState extends State<AnimatedBranchContainer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late int _lastIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _controller.value = 1.0;
+    _lastIndex = widget.currentIndex;
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedBranchContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != oldWidget.currentIndex) {
+      _lastIndex = oldWidget.currentIndex;
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool slidingRight = widget.currentIndex > _lastIndex;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: List.generate(widget.children.length, (index) {
+        if (index == widget.currentIndex) {
+          // Incoming branch
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset(slidingRight ? 1.0 : -1.0, 0.0),
+              end: Offset.zero,
+            ).chain(CurveTween(curve: Curves.easeOutQuint)).animate(_controller),
+            child: widget.children[index],
+          );
+        } else if (index == _lastIndex) {
+          // Outgoing branch
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset.zero,
+              end: Offset(slidingRight ? -1.0 : 1.0, 0.0),
+            ).chain(CurveTween(curve: Curves.easeOutQuint)).animate(_controller),
+            child: widget.children[index],
+          );
+        } else {
+          // Preserved state but hidden
+          return Offstage(
+            offstage: true,
+            child: widget.children[index],
+          );
+        }
+      }),
     );
   }
 }

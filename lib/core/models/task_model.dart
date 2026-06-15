@@ -8,6 +8,7 @@ class TaskModel {
   final String id;
   final String title;
   final String? subtitle;
+  final DateTime? deadline;
   final IconData? subtitleIcon;
   final Color? subtitleColor;
   final String? tagLabel;
@@ -15,12 +16,15 @@ class TaskModel {
   final Color priorityColor;
   final Color leftBorderColor;
   final bool hasAvatars;
+  final String? goalId;
   TaskStatus status;
+  final DateTime? createdAt;
 
   TaskModel({
     required this.id,
     required this.title,
     this.subtitle,
+    this.deadline,
     this.subtitleIcon,
     this.subtitleColor,
     this.tagLabel,
@@ -28,7 +32,9 @@ class TaskModel {
     required this.priorityColor,
     required this.leftBorderColor,
     this.hasAvatars = false,
+    this.goalId,
     this.status = TaskStatus.todo,
+    this.createdAt,
   });
 
   // Convert to Firestore Map (Schema)
@@ -36,11 +42,13 @@ class TaskModel {
     return {
       'title': title,
       'subtitle': subtitle,
+      'deadline': deadline != null ? Timestamp.fromDate(deadline!) : null,
       'tagLabel': tagLabel,
       'status': status.name,
       'hasAvatars': hasAvatars,
       'priorityLabel': priorityLabel,
-      'createdAt': FieldValue.serverTimestamp(),
+      'goalId': goalId,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
     };
   }
 
@@ -67,17 +75,22 @@ class TaskModel {
       id: doc.id,
       title: data['title'] ?? '',
       subtitle: data['subtitle'],
-      subtitleIcon: (data['subtitle'] != null && data['subtitle'].toString().isNotEmpty) ? Icons.calendar_today_outlined : null,
+      deadline: data['deadline'] != null ? (data['deadline'] as Timestamp).toDate() : null,
+      subtitleIcon: (data['deadline'] != null || (data['subtitle'] != null && data['subtitle'].toString().isNotEmpty)) 
+          ? Icons.calendar_today_outlined 
+          : null,
       subtitleColor: AppColors.neutral,
       tagLabel: data['tagLabel'],
       priorityLabel: pLabel,
       priorityColor: pColor,
       leftBorderColor: lBorderColor,
       hasAvatars: data['hasAvatars'] ?? false,
+      goalId: data['goalId'],
       status: TaskStatus.values.firstWhere(
         (e) => e.name == data['status'],
         orElse: () => TaskStatus.todo,
       ),
+      createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : null,
     );
   }
 
@@ -85,9 +98,10 @@ class TaskModel {
   factory TaskModel.create({
     required String title,
     String? description,
-    String? deadline,
+    DateTime? deadline,
     required double urgency,
     required double importance,
+    String? goalId,
   }) {
     String pLabel;
     Color pColor;
@@ -114,13 +128,16 @@ class TaskModel {
     return TaskModel(
       id: UniqueKey().toString(), // Will be overridden by Firestore ID
       title: title,
-      subtitle: deadline,
-      subtitleIcon: deadline != null && deadline.isNotEmpty ? Icons.calendar_today_outlined : null,
+      subtitle: description, // Use subtitle for general description if any
+      deadline: deadline,
+      subtitleIcon: deadline != null ? Icons.calendar_today_outlined : null,
       subtitleColor: AppColors.neutral,
       priorityLabel: pLabel,
       priorityColor: pColor,
       leftBorderColor: lBorderColor,
+      goalId: goalId,
       status: TaskStatus.todo, // Default
+      createdAt: DateTime.now(), // Fallback for local creation
     );
   }
 }
