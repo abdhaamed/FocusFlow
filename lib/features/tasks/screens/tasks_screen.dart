@@ -453,11 +453,9 @@ class _TasksScreenState extends State<TasksScreen> {
                   decoration: TextDecoration.lineThrough,
                   fontSize: 14,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
