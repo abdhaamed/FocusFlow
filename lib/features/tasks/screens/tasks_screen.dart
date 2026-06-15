@@ -2,20 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../shared/widgets/main_bottom_nav.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_constants.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/providers/task_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/task_model.dart';
 import 'create_task_screen.dart';
 
-class TasksScreen extends StatelessWidget {
+class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
+
+  @override
+  State<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends State<TasksScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -39,42 +49,24 @@ class TasksScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Search and Filter Bar
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search tasks...',
-                        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
-                        prefixIcon: Icon(Icons.search, color: AppColors.neutral.withOpacity(0.5)),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
+            // Search Bar
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search tasks...',
+                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
+                  prefixIcon: Icon(Icons.search, color: AppColors.neutral.withOpacity(0.5)),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.filter_list, color: AppColors.primary),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -117,33 +109,37 @@ class TasksScreen extends StatelessWidget {
             // Provider Injection
             Consumer<TaskProvider>(
               builder: (context, provider, child) {
+                final filteredTodo = provider.todoTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
+                final filteredInProgress = provider.inProgressTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
+                final filteredDone = provider.doneTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // TODO Section
-                    _buildCategoryHeader('TODO', provider.todoTasks.length, Colors.grey.shade600),
+                    _buildCategoryHeader('TODO', filteredTodo.length, Colors.grey.shade600),
                     const SizedBox(height: 16),
-                    ...provider.todoTasks.map((task) => Padding(
+                    ...filteredTodo.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(context, provider, task),
+                          child: _buildSlidableTaskCard(task: task, provider: provider),
                         )),
                     const SizedBox(height: 32),
 
                     // IN PROGRESS Section
-                    _buildCategoryHeader('IN PROGRESS', provider.inProgressTasks.length, AppColors.primary),
+                    _buildCategoryHeader('IN PROGRESS', filteredInProgress.length, AppColors.primary),
                     const SizedBox(height: 16),
-                    ...provider.inProgressTasks.map((task) => Padding(
+                    ...filteredInProgress.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(context, provider, task),
+                          child: _buildSlidableTaskCard(task: task, provider: provider),
                         )),
                     const SizedBox(height: 32),
 
                     // DONE Section
-                    _buildCategoryHeader('DONE', provider.doneTasks.length, Colors.grey.shade500),
+                    _buildCategoryHeader('DONE', filteredDone.length, Colors.grey.shade500),
                     const SizedBox(height: 16),
-                    ...provider.doneTasks.map((task) => Padding(
+                    ...filteredDone.map((task) => Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildDoneTaskCard(context, provider, task),
+                          child: _buildDoneTaskCard(task: task, provider: provider),
                         )),
                     const SizedBox(height: 40), // Padding for FAB
                   ],
@@ -159,11 +155,11 @@ class TasksScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      bottomNavigationBar: const MainBottomNav(currentIndex: 1),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
@@ -179,38 +175,22 @@ class TasksScreen extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.only(left: 16.0),
         child: Center(
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            child: const Icon(Icons.person, size: 20, color: AppColors.primary),
-          ),
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Center(
-            child: Stack(
-              children: [
-                const Icon(Icons.notifications_none, color: AppColors.primary, size: 28),
-                Positioned(
-                  right: 4,
-                  top: 2,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade600,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
+          child: GestureDetector(
+            onTap: () => context.push(AppRoutes.profile),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
+                  ? NetworkImage(authProvider.user!.photoURL!) 
+                  : null,
+              child: authProvider.user?.photoURL == null || authProvider.user!.photoURL!.isEmpty 
+                  ? const Icon(Icons.person, size: 20, color: AppColors.primary)
+                  : null,
             ),
           ),
         ),
-      ],
+      ),
+      // actions removed per user request
     );
   }
 
@@ -372,12 +352,16 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  // To simulate the exact layout from the image which shows items mid-swipe.
-  Widget _buildSlidableTaskCard(BuildContext context, TaskProvider provider, TaskModel task) {
+  Widget _buildSlidableTaskCard({
+    required TaskModel task,
+    required TaskProvider provider,
+  }) {
     final innerCard = _buildTaskCard(
       title: task.title,
       subtitleIcon: task.subtitleIcon ?? Icons.access_time,
-      subtitleText: task.subtitle ?? '',
+      subtitleText: task.deadline != null 
+          ? DateFormat('MMM dd, yyyy - hh:mm a').format(task.deadline!) 
+          : (task.subtitle ?? ''),
       subtitleColor: task.subtitleColor ?? AppColors.neutral,
       tagLabel: task.tagLabel,
       avatars: task.hasAvatars,
@@ -386,20 +370,24 @@ class TasksScreen extends StatelessWidget {
       leftBorderColor: task.leftBorderColor,
     );
 
-    // Using real Slidable to make it actually work!
+    final bool canProgress = task.status != TaskStatus.done;
+    final TaskStatus nextStatus = task.status == TaskStatus.todo ? TaskStatus.inProgress : TaskStatus.done;
+
+    final bool isTodo = task.status == TaskStatus.todo;
+    final TaskStatus regressStatus = TaskStatus.todo; // Only called if it's inProgress
+
     return Slidable(
       key: ValueKey(task.id),
-      startActionPane: ActionPane(
+      startActionPane: canProgress ? ActionPane(
         motion: const ScrollMotion(),
+        dismissible: DismissiblePane(onDismissed: () {
+          provider.updateTaskStatus(task.id, nextStatus);
+        }),
         extentRatio: 0.25,
         children: [
           SlidableAction(
             onPressed: (context) {
-              if (task.status == TaskStatus.todo) {
-                provider.updateTaskStatus(task.id, TaskStatus.inProgress);
-              } else if (task.status == TaskStatus.inProgress) {
-                provider.updateTaskStatus(task.id, TaskStatus.done);
-              }
+              provider.updateTaskStatus(task.id, nextStatus);
             },
             backgroundColor: Colors.green.shade600,
             foregroundColor: Colors.white,
@@ -407,68 +395,92 @@ class TasksScreen extends StatelessWidget {
             borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
           ),
         ],
-      ),
+      ) : null,
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
+        dismissible: isTodo ? null : DismissiblePane(onDismissed: () {
+          provider.updateTaskStatus(task.id, regressStatus);
+        }),
         extentRatio: 0.25,
         children: [
-          SlidableAction(
-            onPressed: (context) => provider.deleteTask(task.id),
-            backgroundColor: Colors.red.shade700,
-            foregroundColor: Colors.white,
-            icon: Icons.delete_outline,
-            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
-          ),
+          if (isTodo)
+            SlidableAction(
+              onPressed: (context) {
+                provider.deleteTask(task.id);
+              },
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+              icon: Icons.delete_outline,
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+            )
+          else
+            SlidableAction(
+              onPressed: (context) {
+                provider.updateTaskStatus(task.id, regressStatus);
+              },
+              backgroundColor: Colors.orange.shade600,
+              foregroundColor: Colors.white,
+              icon: Icons.undo,
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+            ),
         ],
       ),
       child: innerCard,
     );
   }
 
-  Widget _buildDoneTaskCard(BuildContext context, TaskProvider provider, TaskModel task) {
-    return Slidable(
-      key: ValueKey(task.id),
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        extentRatio: 0.25,
-        children: [
-          SlidableAction(
-            onPressed: (context) => provider.deleteTask(task.id),
-            backgroundColor: Colors.red.shade700,
-            foregroundColor: Colors.white,
-            icon: Icons.delete_outline,
-            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
-          ),
-        ],
+  Widget _buildDoneTaskCard({
+    required TaskModel task,
+    required TaskProvider provider,
+  }) {
+    final innerCard = Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.grey, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  task.title,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: Colors.grey.shade400,
-                    decoration: TextDecoration.lineThrough,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.grey, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                task.title,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.grey.shade400,
+                  decoration: TextDecoration.lineThrough,
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+
+    return Slidable(
+      key: ValueKey(task.id),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        dismissible: DismissiblePane(onDismissed: () {
+          provider.updateTaskStatus(task.id, TaskStatus.inProgress);
+        }),
+        extentRatio: 0.25,
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              provider.updateTaskStatus(task.id, TaskStatus.inProgress);
+            },
+            backgroundColor: Colors.orange.shade600,
+            foregroundColor: Colors.white,
+            icon: Icons.undo,
+            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+          ),
+        ],
+      ),
+      child: innerCard,
     );
   }
 }

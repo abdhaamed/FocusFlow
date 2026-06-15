@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_provider.dart';
+import '../models/goal_model.dart';
 
 class GoalProvider extends ChangeNotifier {
   final AuthProvider _authProvider;
   bool _isLoading = false;
 
-  // SMART Goal Fields
+  // SMART Goal Draft Fields (used during Onboarding / Add New Goal)
   String _primaryObjective = '';
   String _specific = '';
   String _measurable = '';
@@ -14,13 +16,20 @@ class GoalProvider extends ChangeNotifier {
   String _relevant = '';
   DateTime? _timebound;
 
+  // Goals List
+  List<GoalModel> _goals = [];
+  StreamSubscription<QuerySnapshot>? _goalsSubscription;
+
   GoalProvider(this._authProvider) {
     _authProvider.addListener(_onAuthChange);
-    _fetchPrimaryGoal();
+    if (_authProvider.isAuthenticated && _authProvider.user != null) {
+      _subscribeToGoals(_authProvider.user!.uid);
+    }
   }
 
   bool get isLoading => _isLoading;
 
+  // Draft Getters
   String get primaryObjective => _primaryObjective;
   String get specific => _specific;
   String get measurable => _measurable;
@@ -28,7 +37,14 @@ class GoalProvider extends ChangeNotifier {
   String get relevant => _relevant;
   DateTime? get timebound => _timebound;
 
-  bool get hasGoal => _primaryObjective.isNotEmpty && _specific.isNotEmpty;
+  // Check if we have at least one active goal from DB
+  bool get hasGoal => _goals.isNotEmpty;
+
+  // Goals List Getter
+  List<GoalModel> get goals => _goals;
+
+  // Current Active Goal
+  GoalModel? get currentGoal => _goals.isNotEmpty ? _goals.first : null;
 
   void setPrimaryObjective(String value) { _primaryObjective = value; notifyListeners(); }
   void setSpecific(String value) { _specific = value; notifyListeners(); }
@@ -38,9 +54,11 @@ class GoalProvider extends ChangeNotifier {
   void setTimebound(DateTime? value) { _timebound = value; notifyListeners(); }
 
   void _onAuthChange() {
-    if (_authProvider.isAuthenticated) {
-      _fetchPrimaryGoal();
+    if (_authProvider.isAuthenticated && _authProvider.user != null) {
+      _subscribeToGoals(_authProvider.user!.uid);
     } else {
+      _goals = [];
+      _goalsSubscription?.cancel();
       _clearLocalData();
     }
   }
@@ -55,7 +73,29 @@ class GoalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _fetchPrimaryGoal() async {
+  void _subscribeToGoals(String userId) {
+    _isLoading = true;
+    notifyListeners();
+
+    _goalsSubscription?.cancel();
+    _goalsSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('goals')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      _goals = snapshot.docs.map((doc) => GoalModel.fromFirestore(doc)).toList();
+      _isLoading = false;
+      notifyListeners();
+    }, onError: (error) {
+      _isLoading = false;
+      debugPrint("Error fetching goals: $error");
+      notifyListeners();
+    });
+  }
+
+  Future<void> addGoal() async {
     final user = _authProvider.user;
     if (user == null) return;
 
@@ -63,57 +103,44 @@ class GoalProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists && doc.data()!.containsKey('primaryGoal')) {
-        final goalData = doc.data()!['primaryGoal'] as Map<String, dynamic>;
-        _primaryObjective = goalData['primaryObjective'] ?? '';
-        _specific = goalData['specific'] ?? '';
-        _measurable = goalData['measurable'] ?? '';
-        _achievable = goalData['achievable'] ?? '';
-        _relevant = goalData['relevant'] ?? '';
-        if (goalData['timebound'] != null) {
-          _timebound = (goalData['timebound'] as Timestamp).toDate();
-        }
-      } else {
-        _clearLocalData();
-      }
+      final newGoal = GoalModel(
+        id: '', // Firestore will generate the ID
+        primaryObjective: _primaryObjective,
+        specific: _specific,
+        measurable: _measurable,
+        achievable: _achievable,
+        relevant: _relevant,
+        timebound: _timebound,
+        isActive: true,
+        progress: 0.0,
+      );
+
+      // Add to 'goals' subcollection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('goals')
+          .add(newGoal.toFirestore());
+
+      // Update user doc onboarding flag
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'hasCompletedOnboarding': true,
+      }, SetOptions(merge: true));
+
+      _clearLocalData();
     } catch (e) {
-      debugPrint("Failed to fetch primary goal: $e");
+      debugPrint("Failed to add goal: $e");
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> savePrimaryGoal() async {
-    final user = _authProvider.user;
-    if (user == null) return;
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final goalData = {
-        'primaryObjective': _primaryObjective,
-        'specific': _specific,
-        'measurable': _measurable,
-        'achievable': _achievable,
-        'relevant': _relevant,
-        'timebound': _timebound != null ? Timestamp.fromDate(_timebound!) : null,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'hasCompletedOnboarding': true,
-        'primaryGoal': goalData,
-      }, SetOptions(merge: true));
-
-    } catch (e) {
-      debugPrint("Failed to save primary goal: $e");
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  @override
+  void dispose() {
+    _goalsSubscription?.cancel();
+    _authProvider.removeListener(_onAuthChange);
+    super.dispose();
   }
 }

@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -49,8 +51,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     try {
       await _ensureGoogleSignInInitialized();
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
-      if (googleUser == null) return; // User canceled the sign-in
+      await _googleSignIn.signOut(); // Clear any corrupted states
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -76,6 +78,39 @@ class AuthProvider extends ChangeNotifier {
       }, SetOptions(merge: true));
     } catch (e) {
       debugPrint("Failed to update user document: $e");
+    }
+  }
+
+  Future<void> uploadProfilePhoto(File imageFile) async {
+    final currentUser = _user;
+    if (currentUser == null) return;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('users_profile_photos')
+          .child('${currentUser.uid}.jpg');
+
+      await storageRef.putFile(imageFile);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Update Firebase Auth
+      await currentUser.updatePhotoURL(downloadUrl);
+      // Reload user to get updated data
+      await currentUser.reload();
+      _user = _auth.currentUser;
+
+      // Update Firestore
+      await _updateUserDocument(_user);
+    } catch (e) {
+      debugPrint("Failed to upload profile photo: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

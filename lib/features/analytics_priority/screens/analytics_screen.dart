@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../shared/widgets/main_bottom_nav.dart';
 import '../../../core/providers/task_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/task_model.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
@@ -62,7 +62,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: taskProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -107,17 +107,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   const SizedBox(height: 16),
 
                   // ── Card 4: Activity Heatmap ─────────────────────────────────────
-                  _activityCard(),
+                  _activityCard(allTasks),
                   const SizedBox(height: 8),
                 ],
               ),
             ),
-      bottomNavigationBar: const MainBottomNav(currentIndex: 3),
     );
   }
 
   // ── AppBar ─────────────────────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
@@ -138,36 +138,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary.withOpacity(0.1),
-              child: const Icon(Icons.person, size: 20, color: AppColors.primary),
+              backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
+                  ? NetworkImage(authProvider.user!.photoURL!) 
+                  : null,
+              child: authProvider.user?.photoURL == null || authProvider.user!.photoURL!.isEmpty 
+                  ? const Icon(Icons.person, size: 20, color: AppColors.primary)
+                  : null,
             ),
           ),
         ),
       ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(Icons.notifications_none,
-                  color: AppColors.primary, size: 28),
-              Positioned(
-                right: 4,
-                top: 10,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade600,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      // actions removed per user request
     );
   }
 
@@ -372,7 +353,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   // ── Activity Heatmap ───────────────────────────────────────────────────────
-  Widget _activityCard() {
+  Widget _activityCard(List<TaskModel> allTasks) {
     return _surfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,7 +418,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           const SizedBox(height: 20),
 
           // Heatmap grid
-          _HeatmapGrid(),
+          _HeatmapGrid(allTasks: allTasks),
         ],
       ),
     );
@@ -454,7 +435,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         child: Row(
           children: [
             Text(
-              '2024',
+              DateTime.now().year.toString(),
               style: AppTypography.labelMedium.copyWith(
                 color: AppColors.primary,
                 fontSize: 12,
@@ -615,47 +596,76 @@ class _OKRProgressCard extends StatelessWidget {
 // ── Heatmap Grid ──────────────────────────────────────────────────────────────
 
 class _HeatmapGrid extends StatelessWidget {
-  static final _rng = math.Random(42);
-  static final List<List<double>> _data = List.generate(
-    7,
-    (_) => List.generate(18, (_) => _rng.nextDouble()),
-  );
+  final List<TaskModel> allTasks;
+
+  const _HeatmapGrid({required this.allTasks});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(7, (row) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: List.generate(18, (col) {
-              final intensity = _data[row][col];
-              Color cellColor;
-              if (intensity < 0.15) {
-                cellColor = const Color(0xFFEEF0F8);
-              } else if (intensity < 0.40) {
-                cellColor = AppColors.primary.withOpacity(0.2);
-              } else if (intensity < 0.65) {
-                cellColor = AppColors.primary.withOpacity(0.45);
-              } else if (intensity < 0.85) {
-                cellColor = AppColors.primary.withOpacity(0.70);
-              } else {
-                cellColor = AppColors.primary;
-              }
-              return Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+    final today = DateTime.now();
+    // Sunday = 0, Monday = 1, etc.
+    final currentDayOfWeek = today.weekday % 7; 
+    
+    // Aggregate tasks by date
+    final Map<DateTime, int> taskCountPerDay = {};
+    for (var task in allTasks) {
+      if (task.createdAt != null) {
+        final d = DateTime(task.createdAt!.year, task.createdAt!.month, task.createdAt!.day);
+        taskCountPerDay[d] = (taskCountPerDay[d] ?? 0) + 1;
+      }
+    }
+
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      reverse: true, // Show the most recent day at the far right
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(7, (row) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: List.generate(53, (col) {
+                final daysDiff = (52 - col) * 7 + (currentDayOfWeek - row);
+                
+                double intensity = 0.0;
+                if (daysDiff >= 0) {
+                  final cellDate = todayDate.subtract(Duration(days: daysDiff));
+                  final count = taskCountPerDay[cellDate] ?? 0;
+                  if (count == 0) intensity = 0.0;
+                  else if (count == 1) intensity = 0.3;
+                  else if (count == 2) intensity = 0.6;
+                  else if (count == 3) intensity = 0.8;
+                  else intensity = 1.0;
+                }
+
+                Color cellColor;
+                if (intensity < 0.15) {
+                  cellColor = const Color(0xFFEEF0F8);
+                } else if (intensity < 0.40) {
+                  cellColor = AppColors.primary.withOpacity(0.2);
+                } else if (intensity < 0.65) {
+                  cellColor = AppColors.primary.withOpacity(0.45);
+                } else if (intensity < 0.85) {
+                  cellColor = AppColors.primary.withOpacity(0.70);
+                } else {
+                  cellColor = AppColors.primary;
+                }
+                
+                return Container(
+                  width: 14,
                   height: 14,
+                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
                   decoration: BoxDecoration(
                     color: cellColor,
                     borderRadius: BorderRadius.circular(2.5),
                   ),
-                ),
-              );
-            }),
-          ),
-        );
-      }),
+                );
+              }),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

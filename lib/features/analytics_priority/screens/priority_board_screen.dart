@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../shared/widgets/main_bottom_nav.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/task_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/task_model.dart';
+import 'package:intl/intl.dart';
 
 // ── Data Model ─────────────────────────────────────────────────────────────────
 
@@ -125,7 +128,7 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: taskProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -160,7 +163,6 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
                 ],
               ),
             ),
-      bottomNavigationBar: const MainBottomNav(currentIndex: 2),
     );
   }
 
@@ -294,7 +296,8 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
 
   // ── AppBar ────────────────────────────────────────────────────────────────
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
@@ -310,42 +313,22 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
       leading: Padding(
         padding: const EdgeInsets.only(left: 16.0),
         child: Center(
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            child: const Icon(Icons.person, size: 20, color: AppColors.primary),
-          ),
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Center(
-            child: Stack(
-              children: [
-                const Icon(
-                  Icons.notifications_none,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-                Positioned(
-                  right: 4,
-                  top: 2,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade600,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
+          child: GestureDetector(
+            onTap: () => context.push(AppRoutes.profile),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
+                  ? NetworkImage(authProvider.user!.photoURL!) 
+                  : null,
+              child: authProvider.user?.photoURL == null || authProvider.user!.photoURL!.isEmpty 
+                  ? const Icon(Icons.person, size: 20, color: AppColors.primary)
+                  : null,
             ),
           ),
         ),
-      ],
+      ),
+      // actions removed per user request
     );
   }
 
@@ -507,6 +490,7 @@ class _TaskCard extends StatelessWidget {
                   children: [
                     Text(task.title, style: titleStyle),
                     if (task.subtitle != null ||
+                        task.deadline != null ||
                         task.tagLabel != null ||
                         task.hasAvatars) ...[
                       const SizedBox(height: 6),
@@ -515,7 +499,7 @@ class _TaskCard extends StatelessWidget {
                         spacing: 8,
                         children: [
                           // Subtitle with icon
-                          if (task.subtitle != null && task.subtitleIcon != null)
+                          if ((task.subtitle != null || task.deadline != null) && task.subtitleIcon != null)
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -526,7 +510,9 @@ class _TaskCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  task.subtitle!,
+                                  task.deadline != null 
+                                      ? DateFormat('MMM dd, yyyy - hh:mm a').format(task.deadline!) 
+                                      : task.subtitle!,
                                   style: AppTypography.labelMedium.copyWith(
                                     color: AppColors.neutral,
                                     fontSize: 11,
@@ -535,16 +521,18 @@ class _TaskCard extends StatelessWidget {
                               ],
                             ),
                           // Subtitle plain text
-                          if (task.subtitle != null && task.subtitleIcon == null)
+                          if ((task.subtitle != null || task.deadline != null) && task.subtitleIcon == null)
                             Text(
-                              task.subtitle!,
+                              task.deadline != null 
+                                  ? DateFormat('MMM dd, yyyy - hh:mm a').format(task.deadline!) 
+                                  : task.subtitle!,
                               style: AppTypography.labelMedium.copyWith(
                                 color: AppColors.neutral.withOpacity(0.7),
                                 fontSize: 11,
                               ),
                             ),
                           // Dot separator
-                          if (task.subtitle != null && task.tagLabel != null)
+                          if ((task.subtitle != null || task.deadline != null) && task.tagLabel != null)
                             Container(
                               width: 3,
                               height: 3,
