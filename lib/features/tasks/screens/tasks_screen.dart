@@ -639,8 +639,8 @@ class _TasksScreenState extends State<TasksScreen> {
                   fontSize: 14,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
