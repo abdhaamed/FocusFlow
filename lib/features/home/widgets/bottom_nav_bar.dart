@@ -20,7 +20,7 @@ class AppBottomNavBar extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 24, left: 48, right: 48),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
+        color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(40),
       ),
       child: Row(

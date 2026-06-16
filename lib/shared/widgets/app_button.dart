@@ -30,7 +30,7 @@ class AppButton extends StatelessWidget {
         foregroundColor = Colors.white;
         break;
       case AppButtonVariant.secondary:
-        backgroundColor = AppColors.primary.withOpacity(0.08); // Light blueish
+        backgroundColor = AppColors.primary.withValues(alpha: 0.08); // Light blueish
         foregroundColor = AppColors.primary;
         break;
       case AppButtonVariant.inverted:

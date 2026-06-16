@@ -106,7 +106,7 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -143,7 +143,7 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -173,7 +173,7 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                                 Text(
                                   'Consider: Who is involved? What do I want to accomplish? Where will it happen? Why is this important?',
                                   style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.neutral.withOpacity(0.8),
+                                    color: AppColors.neutral.withValues(alpha: 0.8),
                                     fontSize: 13,
                                     height: 1.4,
                                   ),
@@ -193,7 +193,7 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                                       decoration: InputDecoration(
                                         hintText: 'e.g., I want to increase my daily focused work sessions to 4 hours by the end of the quarter...',
                                         hintStyle: AppTypography.bodyMedium.copyWith(
-                                          color: AppColors.neutral.withOpacity(0.5),
+                                          color: AppColors.neutral.withValues(alpha: 0.5),
                                         ),
                                         contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 48), // Bottom padding for chip
                                         fillColor: Colors.transparent,

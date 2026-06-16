@@ -72,7 +72,7 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
           badgeText: 'Urgent & Important',
           badgeColor: Colors.red.shade50,
           badgeTextColor: Colors.red.shade700,
-          containerColor: Colors.red.shade50.withOpacity(0.5),
+          containerColor: Colors.red.shade50.withValues(alpha: 0.5),
           borderColor: Colors.red.shade100,
           leftBorderColor: Colors.red.shade700,
           titleColor: AppColors.primary,
@@ -83,10 +83,10 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
           icon: Icons.calendar_month,
           iconColor: AppColors.primary,
           badgeText: 'Not Urgent & Important',
-          badgeColor: AppColors.primary.withOpacity(0.1),
+          badgeColor: AppColors.primary.withValues(alpha: 0.1),
           badgeTextColor: AppColors.primary,
-          containerColor: AppColors.primary.withOpacity(0.03),
-          borderColor: AppColors.primary.withOpacity(0.15),
+          containerColor: AppColors.primary.withValues(alpha: 0.03),
+          borderColor: AppColors.primary.withValues(alpha: 0.15),
           leftBorderColor: AppColors.primary,
           titleColor: AppColors.primary,
         );
@@ -96,10 +96,10 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
           icon: Icons.move_to_inbox,
           iconColor: AppColors.primary,
           badgeText: 'Urgent & Not Important',
-          badgeColor: AppColors.primary.withOpacity(0.15),
+          badgeColor: AppColors.primary.withValues(alpha: 0.15),
           badgeTextColor: AppColors.primary,
-          containerColor: AppColors.primary.withOpacity(0.04),
-          borderColor: AppColors.primary.withOpacity(0.15),
+          containerColor: AppColors.primary.withValues(alpha: 0.04),
+          borderColor: AppColors.primary.withValues(alpha: 0.15),
           leftBorderColor: AppColors.primary,
           titleColor: AppColors.primary,
         );
@@ -107,14 +107,14 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
         return _QuadrantConfig(
           title: 'Drop',
           icon: Icons.delete_outline,
-          iconColor: AppColors.neutral.withOpacity(0.6),
+          iconColor: AppColors.neutral.withValues(alpha: 0.6),
           badgeText: 'Not Urgent & Not Important',
-          badgeColor: AppColors.primary.withOpacity(0.05),
-          badgeTextColor: AppColors.neutral.withOpacity(0.6),
+          badgeColor: AppColors.primary.withValues(alpha: 0.05),
+          badgeTextColor: AppColors.neutral.withValues(alpha: 0.6),
           containerColor: Colors.grey.shade50,
           borderColor: Colors.grey.shade200,
           leftBorderColor: Colors.grey.shade300,
-          titleColor: AppColors.neutral.withOpacity(0.6),
+          titleColor: AppColors.neutral.withValues(alpha: 0.6),
         );
     }
   }
@@ -181,12 +181,12 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: isHovering
-                ? cfg.containerColor.withOpacity(0.85)
+                ? cfg.containerColor.withValues(alpha: 0.85)
                 : cfg.containerColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isHovering
-                  ? cfg.leftBorderColor.withOpacity(0.6)
+                  ? cfg.leftBorderColor.withValues(alpha: 0.6)
                   : cfg.borderColor,
               width: isHovering ? 2.0 : 1.5,
             ),
@@ -236,11 +236,11 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
                   height: 52,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: cfg.leftBorderColor.withOpacity(0.4),
+                      color: cfg.leftBorderColor.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(8),
-                    color: cfg.leftBorderColor.withOpacity(0.06),
+                    color: cfg.leftBorderColor.withValues(alpha: 0.06),
                   ),
                   child: Center(
                     child: Text(
@@ -317,7 +317,7 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
             onTap: () => context.push(AppRoutes.profile),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
                   ? NetworkImage(authProvider.user!.photoURL!) 
                   : null,
@@ -338,7 +338,7 @@ class _PriorityBoardScreenState extends State<PriorityBoardScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.04),
+        color: AppColors.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -446,9 +446,9 @@ class _TaskCard extends StatelessWidget {
 
     final titleStyle = AppTypography.bodyMedium.copyWith(
       color: isDone
-          ? AppColors.neutral.withOpacity(0.5)
+          ? AppColors.neutral.withValues(alpha: 0.5)
           : isDisabled
-          ? AppColors.neutral.withOpacity(0.7)
+          ? AppColors.neutral.withValues(alpha: 0.7)
           : AppColors.primary,
       fontWeight: FontWeight.w600,
       fontSize: 14,
@@ -461,7 +461,7 @@ class _TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -527,7 +527,7 @@ class _TaskCard extends StatelessWidget {
                                   ? DateFormat('MMM dd, yyyy - hh:mm a').format(task.deadline!) 
                                   : task.subtitle!,
                               style: AppTypography.labelMedium.copyWith(
-                                color: AppColors.neutral.withOpacity(0.7),
+                                color: AppColors.neutral.withValues(alpha: 0.7),
                                 fontSize: 11,
                               ),
                             ),
@@ -549,10 +549,10 @@ class _TaskCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: task.priorityColor.withOpacity(0.1),
+                                color: task.priorityColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: task.priorityColor.withOpacity(0.2),
+                                  color: task.priorityColor.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Text(

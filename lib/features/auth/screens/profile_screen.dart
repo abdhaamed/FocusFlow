@@ -118,7 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                           backgroundImage: user.photoURL != null && user.photoURL!.isNotEmpty
                               ? NetworkImage(user.photoURL!)
                               : null,
@@ -222,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.neutral.withOpacity(0.6),
+            color: AppColors.neutral.withValues(alpha: 0.6),
             fontSize: 12,
           ),
         ),

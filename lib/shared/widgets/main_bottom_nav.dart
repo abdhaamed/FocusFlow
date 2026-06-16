@@ -33,7 +33,7 @@ class MainBottomNav extends StatelessWidget {
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -101,7 +101,7 @@ class _BottomNavItemState extends State<_BottomNavItem> with SingleTickerProvide
           ),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppColors.primary.withOpacity(0.12)
+                ? AppColors.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(24),
           ),
@@ -112,7 +112,7 @@ class _BottomNavItemState extends State<_BottomNavItem> with SingleTickerProvide
                 widget.item.icon,
                 color: widget.isSelected
                     ? AppColors.primary
-                    : AppColors.neutral.withOpacity(0.4),
+                    : AppColors.neutral.withValues(alpha: 0.4),
                 size: 24,
               ),
               if (widget.isSelected) ...[

@@ -24,7 +24,7 @@ class GoalSummaryScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -64,7 +64,7 @@ class GoalSummaryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -99,7 +99,7 @@ class GoalSummaryScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.08),
+                                  color: AppColors.primary.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -216,7 +216,7 @@ class GoalSummaryScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.5),
+        color: AppColors.background.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

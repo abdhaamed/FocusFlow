@@ -29,11 +29,11 @@ class AppTextField extends StatelessWidget {
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.6)),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withValues(alpha: 0.6)),
         prefixIcon: prefixIcon,
-        prefixIconColor: AppColors.neutral.withOpacity(0.6),
+        prefixIconColor: AppColors.neutral.withValues(alpha: 0.6),
         filled: true,
-        fillColor: AppColors.primary.withOpacity(0.05),
+        fillColor: AppColors.primary.withValues(alpha: 0.05),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -41,7 +41,7 @@ class AppTextField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.1), width: 1),
+          borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.1), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

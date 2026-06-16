@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () => context.push(AppRoutes.profile),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
                     ? NetworkImage(authProvider.user!.photoURL!) 
                     : null,
@@ -151,7 +151,7 @@ class HomeScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -179,7 +179,7 @@ class HomeScreen extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.15),
+                        color: AppColors.secondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -336,7 +336,7 @@ class HomeScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -420,7 +420,7 @@ class HomeScreen extends StatelessWidget {
       child: DottedBorder(
         options: RoundedRectDottedBorderOptions(
           radius: const Radius.circular(12),
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           strokeWidth: 1.5,
           dashPattern: const [6, 4],
         ),
@@ -466,7 +466,7 @@ class HomeScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -656,8 +656,9 @@ class HomeScreen extends StatelessWidget {
     // 3. Deep Work Hours Estimation
     double deepWorkHours = 0;
     for (var task in doneTasks) {
-      if (task.priorityLabel == 'Q1') deepWorkHours += 2.0;
-      else if (task.priorityLabel == 'Q2') deepWorkHours += 1.5;
+      if (task.priorityLabel == 'Q1') {
+        deepWorkHours += 2.0;
+      } else if (task.priorityLabel == 'Q2') deepWorkHours += 1.5;
       else if (task.priorityLabel == 'Q3') deepWorkHours += 1.0;
       else deepWorkHours += 0.5; // Q4
     }
@@ -673,7 +674,7 @@ class HomeScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -708,7 +709,7 @@ class HomeScreen extends StatelessWidget {
                     Text(
                       'Focus Score',
                       style: AppTypography.labelMedium.copyWith(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 11,
                       ),
                     ),
@@ -724,7 +725,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 Icon(
                   Icons.trending_up,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   size: 32,
                 ),
               ],
@@ -755,7 +756,7 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         'Tasks Completed',
                         style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary.withOpacity(0.8),
+                          color: AppColors.primary.withValues(alpha: 0.8),
                           fontSize: 10,
                         ),
                       ),
@@ -784,7 +785,7 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         'Deep Work',
                         style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary.withOpacity(0.8),
+                          color: AppColors.primary.withValues(alpha: 0.8),
                           fontSize: 10,
                         ),
                       ),

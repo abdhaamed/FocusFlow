@@ -120,7 +120,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -167,7 +167,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                           Text(
                             'Break your goal down into logical, sequential actions.',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.neutral.withOpacity(0.8),
+                              color: AppColors.neutral.withValues(alpha: 0.8),
                               fontSize: 11,
                             ),
                           ),
@@ -238,7 +238,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
+                            color: Colors.black.withValues(alpha: 0.02),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -261,7 +261,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                                 Text(
                                   'Are you confident this is achievable within your constraints?',
                                   style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.neutral.withOpacity(0.8),
+                                    color: AppColors.neutral.withValues(alpha: 0.8),
                                     fontSize: 11,
                                     height: 1.3,
                                   ),
@@ -271,7 +271,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                           ),
                           Switch(
                             value: _isRealistic,
-                            activeColor: Colors.white,
+                            activeThumbColor: Colors.white,
                             activeTrackColor: AppColors.primary,
                             inactiveTrackColor: Colors.grey.shade300,
                             inactiveThumbColor: Colors.white,
@@ -344,7 +344,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
         border: Border.all(color: Colors.grey.shade200, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -382,7 +382,7 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withValues(alpha: 0.5)),
         filled: true,
         fillColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

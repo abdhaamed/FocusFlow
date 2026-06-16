@@ -126,7 +126,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -165,7 +165,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -190,7 +190,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                                 Text(
                                   'e.g., Revenue, Users, Pages read, Miles run.',
                                   style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.neutral.withOpacity(0.8),
+                                    color: AppColors.neutral.withValues(alpha: 0.8),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -311,8 +311,8 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: AppColors.neutral.withOpacity(0.6), size: 20),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withValues(alpha: 0.5)),
+        prefixIcon: Icon(icon, color: AppColors.neutral.withValues(alpha: 0.6), size: 20),
         filled: true,
         fillColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -340,7 +340,7 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.06) : Colors.transparent,
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.grey.shade300,

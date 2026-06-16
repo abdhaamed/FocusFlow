@@ -299,7 +299,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                     const SizedBox(height: 14),
                     _card(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedGoalId,
+                        initialValue: _selectedGoalId,
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: const Color(0xFFF9FAFB),
@@ -316,7 +316,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                         hint: Text(
                           'Select a Goal',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.neutral.withOpacity(0.5),
+                            color: AppColors.neutral.withValues(alpha: 0.5),
                             fontSize: 14,
                           ),
                         ),
@@ -337,7 +337,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -405,7 +405,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: _placementColor.withOpacity(0.12),
+                              color: _placementColor.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(_placementIcon, color: _placementColor, size: 20),
@@ -567,7 +567,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.neutral.withOpacity(0.5),
+          color: AppColors.neutral.withValues(alpha: 0.5),
           fontSize: 14,
         ),
         filled: true,
@@ -605,7 +605,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
       decoration: InputDecoration(
         hintText: 'Select Date & Time',
         hintStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.neutral.withOpacity(0.5),
+          color: AppColors.neutral.withValues(alpha: 0.5),
           fontSize: 14,
         ),
         filled: true,
@@ -614,7 +614,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
           padding: const EdgeInsets.all(12),
           child: Icon(
             Icons.calendar_today_outlined,
-            color: AppColors.neutral.withOpacity(0.6),
+            color: AppColors.neutral.withValues(alpha: 0.6),
             size: 18,
           ),
         ),
@@ -684,7 +684,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
         // Slider
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: AppColors.primary.withOpacity(0.25),
+            activeTrackColor: AppColors.primary.withValues(alpha: 0.25),
             inactiveTrackColor: Colors.grey.shade200,
             thumbColor: AppColors.primary,
             overlayColor: Colors.transparent,
@@ -709,14 +709,14 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
               Text(
                 'Low',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.neutral.withOpacity(0.6),
+                  color: AppColors.neutral.withValues(alpha: 0.6),
                   fontSize: 11,
                 ),
               ),
               Text(
                 'High',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.neutral.withOpacity(0.6),
+                  color: AppColors.neutral.withValues(alpha: 0.6),
                   fontSize: 11,
                 ),
               ),

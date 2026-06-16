@@ -49,8 +49,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
     int q1 = 0, q2 = 0, q3 = 0, q4 = 0;
     for (var t in allTasks) {
-      if (t.priorityLabel == 'Q1') q1++;
-      else if (t.priorityLabel == 'Q2') q2++;
+      if (t.priorityLabel == 'Q1') {
+        q1++;
+      } else if (t.priorityLabel == 'Q2') q2++;
       else if (t.priorityLabel == 'Q3') q3++;
       else q4++;
     }
@@ -137,7 +138,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             onTap: () => context.push(AppRoutes.profile),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
                   ? NetworkImage(authProvider.user!.photoURL!) 
                   : null,
@@ -198,7 +199,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             valueColor: const Color(0xFF4ADE80),
           ),
           const SizedBox(height: 4),
-          Divider(color: Colors.white.withOpacity(0.12), thickness: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.12), thickness: 1),
           const SizedBox(height: 4),
 
           // Q1 Completion
@@ -233,7 +234,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             fontSize: 11,
             letterSpacing: 1.2,
             fontWeight: FontWeight.w700,
@@ -243,7 +244,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         Text(
           description,
           style: AppTypography.bodyMedium.copyWith(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 13,
             height: 1.5,
           ),
@@ -265,7 +266,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.pie_chart_outline,
@@ -365,7 +366,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.calendar_today_outlined,
@@ -389,7 +390,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   Text(
                     'Less',
                     style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.neutral.withOpacity(0.6),
+                      color: AppColors.neutral.withValues(alpha: 0.6),
                       fontSize: 10,
                     ),
                   ),
@@ -399,7 +400,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         height: 10,
                         margin: const EdgeInsets.symmetric(horizontal: 1),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(op),
+                          color: AppColors.primary.withValues(alpha: op),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       )),
@@ -407,7 +408,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   Text(
                     'More',
                     style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.neutral.withOpacity(0.6),
+                      color: AppColors.neutral.withValues(alpha: 0.6),
                       fontSize: 10,
                     ),
                   ),
@@ -429,7 +430,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
+          color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -500,7 +501,7 @@ class _OKRProgressCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.flag_outlined,
@@ -521,7 +522,7 @@ class _OKRProgressCard extends StatelessWidget {
                   Text(
                     '$doneTasks out of $totalTasks Tasks',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.neutral.withOpacity(0.7),
+                      color: AppColors.neutral.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -535,7 +536,7 @@ class _OKRProgressCard extends StatelessWidget {
           Center(
             child: AnimatedBuilder(
               animation: progressAnim,
-              builder: (_, __) => SizedBox(
+              builder: (_, _) => SizedBox(
                 width: 130,
                 height: 130,
                 child: CustomPaint(
@@ -560,7 +561,7 @@ class _OKRProgressCard extends StatelessWidget {
                         Text(
                           'Completed',
                           style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.neutral.withOpacity(0.6),
+                            color: AppColors.neutral.withValues(alpha: 0.6),
                             fontSize: 11,
                           ),
                         ),
@@ -576,7 +577,7 @@ class _OKRProgressCard extends StatelessWidget {
           // Linear progress bar below
           AnimatedBuilder(
             animation: progressAnim,
-            builder: (_, __) => ClipRRect(
+            builder: (_, _) => ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progressAnim.value * progressRatio,
@@ -632,8 +633,9 @@ class _HeatmapGrid extends StatelessWidget {
                 if (daysDiff >= 0) {
                   final cellDate = todayDate.subtract(Duration(days: daysDiff));
                   final count = taskCountPerDay[cellDate] ?? 0;
-                  if (count == 0) intensity = 0.0;
-                  else if (count == 1) intensity = 0.3;
+                  if (count == 0) {
+                    intensity = 0.0;
+                  } else if (count == 1) intensity = 0.3;
                   else if (count == 2) intensity = 0.6;
                   else if (count == 3) intensity = 0.8;
                   else intensity = 1.0;
@@ -643,11 +645,11 @@ class _HeatmapGrid extends StatelessWidget {
                 if (intensity < 0.15) {
                   cellColor = const Color(0xFFEEF0F8);
                 } else if (intensity < 0.40) {
-                  cellColor = AppColors.primary.withOpacity(0.2);
+                  cellColor = AppColors.primary.withValues(alpha: 0.2);
                 } else if (intensity < 0.65) {
-                  cellColor = AppColors.primary.withOpacity(0.45);
+                  cellColor = AppColors.primary.withValues(alpha: 0.45);
                 } else if (intensity < 0.85) {
-                  cellColor = AppColors.primary.withOpacity(0.70);
+                  cellColor = AppColors.primary.withValues(alpha: 0.70);
                 } else {
                   cellColor = AppColors.primary;
                 }

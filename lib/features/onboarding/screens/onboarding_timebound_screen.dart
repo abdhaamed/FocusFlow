@@ -149,7 +149,7 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -244,7 +244,7 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                                           fontSize: 14,
                                         ),
                                       ),
-                                      Icon(Icons.edit_calendar_outlined, color: AppColors.neutral.withOpacity(0.8), size: 20),
+                                      Icon(Icons.edit_calendar_outlined, color: AppColors.neutral.withValues(alpha: 0.8), size: 20),
                                     ],
                                   ),
                                 ),
@@ -310,14 +310,14 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.05),
+                                    color: AppColors.primary.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                                   ),
                                   child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.info_outline, color: AppColors.primary.withOpacity(0.8), size: 18),
+                                      Icon(Icons.info_outline, color: AppColors.primary.withValues(alpha: 0.8), size: 18),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(

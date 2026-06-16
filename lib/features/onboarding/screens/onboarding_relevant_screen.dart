@@ -228,7 +228,7 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
         border: Border.all(color: Colors.grey.shade200, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -260,7 +260,7 @@ class _OnboardingRelevantScreenState extends State<OnboardingRelevantScreen> {
       style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withValues(alpha: 0.5)),
         filled: true,
         fillColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

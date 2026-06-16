@@ -114,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: AppColors.neutral.withOpacity(0.5),
+                            color: AppColors.neutral.withValues(alpha: 0.5),
                           ),
                           onPressed: () {
                             setState(() {

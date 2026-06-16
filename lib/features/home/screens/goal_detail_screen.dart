@@ -78,7 +78,7 @@ class GoalDetailScreen extends StatelessWidget {
                   final authProvider = context.watch<AuthProvider>();
                   return CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty
                         ? NetworkImage(authProvider.user!.photoURL!)
                         : null,
@@ -105,7 +105,7 @@ class GoalDetailScreen extends StatelessWidget {
               icon: Icons.track_changes,
               iconColor: AppColors.primary,
               title: 'Specific',
-              borderColor: AppColors.primary.withOpacity(0.5),
+              borderColor: AppColors.primary.withValues(alpha: 0.5),
               description: currentGoal.specific.isNotEmpty ? currentGoal.specific : 'Not specified.',
             ),
             const SizedBox(height: 12),
@@ -157,7 +157,7 @@ class GoalDetailScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -180,9 +180,9 @@ class GoalDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         'CURRENT GOAL',
@@ -247,7 +247,7 @@ class GoalDetailScreen extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 8,
-                            backgroundColor: Colors.blue.withOpacity(0.15),
+                            backgroundColor: Colors.blue.withValues(alpha: 0.15),
                             valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF004D00)),
                           ),
                         ),
@@ -371,8 +371,8 @@ class GoalDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -456,7 +456,7 @@ class GoalDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(

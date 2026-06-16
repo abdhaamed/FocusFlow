@@ -21,6 +21,28 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   String _searchQuery = '';
 
+  bool _matchesQuery(TaskModel task) {
+    if (_searchQuery.isEmpty) return true;
+
+    final formattedDeadline = task.deadline != null
+        ? DateFormat('MMM dd, yyyy - hh:mm a').format(task.deadline!).toLowerCase()
+        : '';
+
+    final haystacks = <String>[
+      task.title,
+      task.subtitle ?? '',
+      task.tagLabel ?? '',
+      task.priorityLabel,
+      formattedDeadline,
+    ];
+
+    return haystacks.any((value) => value.toLowerCase().contains(_searchQuery));
+  }
+
+  bool _isOverdue(TaskModel task) {
+    return task.deadline != null && task.status != TaskStatus.done && task.deadline!.isBefore(DateTime.now());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,11 +80,11 @@ class _TasksScreenState extends State<TasksScreen> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: TextField(
-                onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                onChanged: (value) => setState(() => _searchQuery = value.trim().toLowerCase()),
                 decoration: InputDecoration(
                   hintText: 'Search tasks...',
-                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withOpacity(0.5)),
-                  prefixIcon: Icon(Icons.search, color: AppColors.neutral.withOpacity(0.5)),
+                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral.withValues(alpha: 0.5)),
+                  prefixIcon: Icon(Icons.search, color: AppColors.neutral.withValues(alpha: 0.5)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -74,7 +96,7 @@ class _TasksScreenState extends State<TasksScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.06),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -109,39 +131,63 @@ class _TasksScreenState extends State<TasksScreen> {
             // Provider Injection
             Consumer<TaskProvider>(
               builder: (context, provider, child) {
-                final filteredTodo = provider.todoTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
-                final filteredInProgress = provider.inProgressTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
-                final filteredDone = provider.doneTasks.where((t) => _searchQuery.isEmpty || t.title.toLowerCase().contains(_searchQuery)).toList();
+                final filteredTodo = provider.todoTasks.where(_matchesQuery).toList();
+                final filteredInProgress = provider.inProgressTasks.where(_matchesQuery).toList();
+                final filteredDone = provider.doneTasks.where(_matchesQuery).toList();
+                final filteredTasks = <TaskModel>[...filteredTodo, ...filteredInProgress, ...filteredDone];
+                final overdueCount = provider.tasks.where(_isOverdue).length;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TODO Section
-                    _buildCategoryHeader('TODO', filteredTodo.length, Colors.grey.shade600),
-                    const SizedBox(height: 16),
-                    ...filteredTodo.map((task) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(task: task, provider: provider),
-                        )),
-                    const SizedBox(height: 32),
-
-                    // IN PROGRESS Section
-                    _buildCategoryHeader('IN PROGRESS', filteredInProgress.length, AppColors.primary),
-                    const SizedBox(height: 16),
-                    ...filteredInProgress.map((task) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildSlidableTaskCard(task: task, provider: provider),
-                        )),
-                    const SizedBox(height: 32),
-
-                    // DONE Section
-                    _buildCategoryHeader('DONE', filteredDone.length, Colors.grey.shade500),
-                    const SizedBox(height: 16),
-                    ...filteredDone.map((task) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildDoneTaskCard(task: task, provider: provider),
-                        )),
-                    const SizedBox(height: 40), // Padding for FAB
+                    _buildStatsRow(provider: provider, overdueCount: overdueCount),
+                    const SizedBox(height: 24),
+                    if (provider.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (provider.tasks.isEmpty)
+                      _buildEmptyState(
+                        icon: Icons.task_alt,
+                        title: 'No tasks yet',
+                        description: 'Create your first task to start organizing the day.',
+                      )
+                    else if (filteredTasks.isEmpty)
+                      _buildEmptyState(
+                        icon: Icons.search_off,
+                        title: 'No matches found',
+                        description: 'Try a different keyword or clear the search.',
+                      )
+                    else ...[
+                      if (filteredTodo.isNotEmpty) ...[
+                        _buildCategoryHeader('TODO', filteredTodo.length, Colors.grey.shade600),
+                        const SizedBox(height: 16),
+                        ...filteredTodo.map((task) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildSlidableTaskCard(task: task, provider: provider),
+                            )),
+                        const SizedBox(height: 32),
+                      ],
+                      if (filteredInProgress.isNotEmpty) ...[
+                        _buildCategoryHeader('IN PROGRESS', filteredInProgress.length, AppColors.primary),
+                        const SizedBox(height: 16),
+                        ...filteredInProgress.map((task) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildSlidableTaskCard(task: task, provider: provider),
+                            )),
+                        const SizedBox(height: 32),
+                      ],
+                      if (filteredDone.isNotEmpty) ...[
+                        _buildCategoryHeader('DONE', filteredDone.length, Colors.grey.shade500),
+                        const SizedBox(height: 16),
+                        ...filteredDone.map((task) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildDoneTaskCard(task: task, provider: provider),
+                            )),
+                        const SizedBox(height: 40),
+                      ],
+                    ],
                   ],
                 );
               },
@@ -154,6 +200,124 @@ class _TasksScreenState extends State<TasksScreen> {
         backgroundColor: AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+    );
+  }
+
+  Widget _buildStatsRow({
+    required TaskProvider provider,
+    required int overdueCount,
+  }) {
+    final openCount = provider.todoTasks.length + provider.inProgressTasks.length;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatChip(
+            label: 'Open',
+            value: openCount.toString(),
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatChip(
+            label: 'Overdue',
+            value: overdueCount.toString(),
+            color: Colors.red.shade600,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatChip(
+            label: 'Done',
+            value: provider.doneTasks.length.toString(),
+            color: Colors.green.shade600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: AppTypography.headlineMedium.copyWith(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.neutral,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 28, color: AppColors.primary),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: AppTypography.headlineMedium.copyWith(
+              color: AppColors.primary,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.neutral,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -179,7 +343,7 @@ class _TasksScreenState extends State<TasksScreen> {
             onTap: () => context.push(AppRoutes.profile),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               backgroundImage: authProvider.user?.photoURL != null && authProvider.user!.photoURL!.isNotEmpty 
                   ? NetworkImage(authProvider.user!.photoURL!) 
                   : null,
@@ -213,7 +377,7 @@ class _TasksScreenState extends State<TasksScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
+              color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -237,6 +401,7 @@ class _TasksScreenState extends State<TasksScreen> {
     required Color subtitleColor,
     String? tagLabel,
     bool avatars = false,
+    bool isOverdue = false,
     required String priorityLabel,
     required Color priorityColor,
     required Color leftBorderColor,
@@ -248,7 +413,7 @@ class _TasksScreenState extends State<TasksScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -318,10 +483,27 @@ class _TasksScreenState extends State<TasksScreen> {
                               children: [
                                 Align(
                                   widthFactor: 0.75,
-                                  child: CircleAvatar(radius: 8, backgroundColor: AppColors.primary.withOpacity(0.2), child: const Icon(Icons.person, size: 10, color: AppColors.primary)),
+                                  child: CircleAvatar(radius: 8, backgroundColor: AppColors.primary.withValues(alpha: 0.2), child: const Icon(Icons.person, size: 10, color: AppColors.primary)),
                                 ),
                                 const CircleAvatar(radius: 8, backgroundColor: AppColors.tertiary, child: Icon(Icons.person, size: 10, color: Colors.white)),
                               ],
+                            ),
+                          if (isOverdue)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Text(
+                                'OVERDUE',
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: Colors.red.shade700,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                         ],
                       ),
@@ -365,6 +547,7 @@ class _TasksScreenState extends State<TasksScreen> {
       subtitleColor: task.subtitleColor ?? AppColors.neutral,
       tagLabel: task.tagLabel,
       avatars: task.hasAvatars,
+      isOverdue: _isOverdue(task),
       priorityLabel: task.priorityLabel,
       priorityColor: task.priorityColor,
       leftBorderColor: task.leftBorderColor,
@@ -374,7 +557,9 @@ class _TasksScreenState extends State<TasksScreen> {
     final TaskStatus nextStatus = task.status == TaskStatus.todo ? TaskStatus.inProgress : TaskStatus.done;
 
     final bool isTodo = task.status == TaskStatus.todo;
-    final TaskStatus regressStatus = TaskStatus.todo; // Only called if it's inProgress
+    final TaskStatus regressStatus = task.status == TaskStatus.inProgress
+      ? TaskStatus.todo
+      : TaskStatus.inProgress;
 
     return Slidable(
       key: ValueKey(task.id),
