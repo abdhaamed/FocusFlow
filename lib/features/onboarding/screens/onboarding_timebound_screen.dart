@@ -5,7 +5,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/progress_bar.dart';
+import '../widgets/onboarding_progress_bar.dart';
+import '../widgets/onboarding_step_header.dart';
 
 import 'package:provider/provider.dart';
 import '../../../core/providers/goal_provider.dart';
@@ -83,37 +84,9 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
         child: Column(
           children: [
             // STEP PROGRESS HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Step 5 of 5',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.neutral,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        'Completed',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const AppProgressBar(
-                    value: 1.0,
-                    color: AppColors.tertiary, // Green
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: OnboardingProgressBar(currentStep: 5, totalSteps: 5),
             ),
             
             Expanded(
@@ -122,22 +95,10 @@ class _OnboardingTimeboundScreenState extends State<OnboardingTimeboundScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Titles
-                    Text(
-                      'Set a deadline.',
-                      style: AppTypography.headlineLarge.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'A goal without a deadline is just a dream. When do you commit to achieving this?',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.neutral,
-                        fontSize: 15,
-                        height: 1.5,
-                      ),
+                    const OnboardingStepHeader(
+                      title: 'Set a deadline.',
+                      description: 'A goal without a deadline is just a dream. When do you commit to achieving this?',
+                      icon: Icons.calendar_today_outlined,
                     ),
                     const SizedBox(height: 32),
                     

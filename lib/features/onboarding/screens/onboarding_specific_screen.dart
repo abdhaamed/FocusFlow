@@ -4,7 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/progress_bar.dart';
+import '../widgets/onboarding_progress_bar.dart';
+import '../widgets/onboarding_step_header.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/goal_provider.dart';
 
@@ -62,38 +63,9 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
         child: Column(
           children: [
             // STEP PROGRESS HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'STEP 1 OF 5',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.neutral,
-                          fontSize: 12,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      Text(
-                        '20%',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const AppProgressBar(
-                    value: 0.2,
-                    color: AppColors.tertiary, // Green
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: OnboardingProgressBar(currentStep: 1, totalSteps: 5),
             ),
             
             Expanded(
@@ -102,37 +74,10 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.track_changes,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Titles
-                    Text(
-                      'Specific Goal',
-                      style: AppTypography.headlineLarge.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Define exactly what you want to accomplish. A specific goal has a much greater chance of being accomplished than a general goal.',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.neutral,
-                        fontSize: 15,
-                        height: 1.5,
-                      ),
+                    const OnboardingStepHeader(
+                      title: 'Specific Goal',
+                      description: 'Define exactly what you want to accomplish. A specific goal has a much greater chance of being accomplished than a general goal.',
+                      icon: Icons.track_changes,
                     ),
                     const SizedBox(height: 32),
                     
@@ -280,8 +225,10 @@ class _OnboardingSpecificScreenState extends State<OnboardingSpecificScreen> {
                           );
                           return;
                         }
-                        // Also set primaryObjective from specific for now
-                        context.read<GoalProvider>().setPrimaryObjective(_controller.text.trim());
+                        // Also set primaryObjective and specific
+                        final goalVal = _controller.text.trim();
+                        context.read<GoalProvider>().setPrimaryObjective(goalVal);
+                        context.read<GoalProvider>().setSpecific(goalVal);
                         context.push(AppRoutes.onboardingMeasurable);
                       },
                     ),

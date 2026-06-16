@@ -4,7 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/progress_bar.dart';
+import '../widgets/onboarding_progress_bar.dart';
+import '../widgets/onboarding_step_header.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/goal_provider.dart';
 
@@ -24,9 +25,26 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
   @override
   void initState() {
     super.initState();
+    final goalProvider = Provider.of<GoalProvider>(context, listen: false);
     _milestonesController = TextEditingController();
     _resourcesController = TextEditingController();
     _blockersController = TextEditingController();
+    
+    // Try to parse existing data if it's there
+    if (goalProvider.achievable.isNotEmpty) {
+      final data = goalProvider.achievable.split('\n');
+      for (var line in data) {
+        if (line.startsWith('Milestones: ')) {
+          _milestonesController.text = line.replaceFirst('Milestones: ', '');
+        } else if (line.startsWith('Resources: ')) {
+          _resourcesController.text = line.replaceFirst('Resources: ', '');
+        } else if (line.startsWith('Blockers: ')) {
+          _blockersController.text = line.replaceFirst('Blockers: ', '');
+        } else if (line.startsWith('Realistic: ')) {
+          _isRealistic = line.replaceFirst('Realistic: ', '') == 'true';
+        }
+      }
+    }
   }
 
   void _updateAchievable() {
@@ -77,37 +95,9 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
         child: Column(
           children: [
             // STEP PROGRESS HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'STEP 3 OF 5',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.neutral,
-                          fontSize: 11,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      Text(
-                        'Achievable',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.neutral,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const AppProgressBar(
-                    value: 0.6,
-                    color: AppColors.tertiary, // Green
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: OnboardingProgressBar(currentStep: 3, totalSteps: 5),
             ),
             
             Expanded(
@@ -116,37 +106,10 @@ class _OnboardingAchievableScreenState extends State<OnboardingAchievableScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.verified,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Titles
-                    Text(
-                      'Achievable Goal',
-                      style: AppTypography.headlineLarge.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Outline the critical steps, resources, and skills required to bridge the gap between where you are now and your objective.',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.neutral,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
+                    const OnboardingStepHeader(
+                      title: 'Achievable Goal',
+                      description: 'Outline the critical steps, resources, and skills required to bridge the gap between where you are now and your objective.',
+                      icon: Icons.verified,
                     ),
                     const SizedBox(height: 32),
                     

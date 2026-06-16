@@ -4,7 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/progress_bar.dart';
+import '../widgets/onboarding_progress_bar.dart';
+import '../widgets/onboarding_step_header.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/goal_provider.dart';
 
@@ -25,12 +26,28 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
   @override
   void initState() {
     super.initState();
+    final goalProvider = Provider.of<GoalProvider>(context, listen: false);
     _metricController = TextEditingController();
     _currentValueController = TextEditingController();
     _targetValueController = TextEditingController();
     
-    // Parse existing data if needed, but for simplicity let's just initialize empty
-    // since measurable string will be complex.
+    // Parse existing data if available
+    if (goalProvider.measurable.isNotEmpty) {
+      final measurable = goalProvider.measurable;
+      // Format: 'Increase $metric from $curr to $target ($_selectedFrequency)'
+      try {
+        final regExp = RegExp(r"Increase (.*) from (.*) to (.*) \((.*)\)");
+        final match = regExp.firstMatch(measurable);
+        if (match != null) {
+          _metricController.text = match.group(1) ?? '';
+          _currentValueController.text = match.group(2) ?? '';
+          _targetValueController.text = match.group(3) ?? '';
+          _selectedFrequency = match.group(4) ?? 'Weekly';
+        }
+      } catch (e) {
+        debugPrint('Error parsing measurable goal: $e');
+      }
+    }
   }
 
   void _updateMeasurable() {
@@ -83,37 +100,9 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
         child: Column(
           children: [
             // STEP PROGRESS HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Step 2 of 5',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.neutral,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        'Measurable',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const AppProgressBar(
-                    value: 0.4,
-                    color: AppColors.tertiary, // Green
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: OnboardingProgressBar(currentStep: 2, totalSteps: 5),
             ),
             
             Expanded(
@@ -122,31 +111,12 @@ class _OnboardingMeasurableScreenState extends State<OnboardingMeasurableScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.table_chart_outlined,
-                        color: AppColors.primary,
-                        size: 28,
-                      ),
+                    const OnboardingStepHeader(
+                      title: 'Measurable Goal',
+                      description: 'Establish concrete criteria for measuring progress toward the attainment of each goal you set.',
+                      icon: Icons.table_chart_outlined,
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Titles
-                    Text(
-                      'Measurable Goal',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.headlineLarge.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 26,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 32),
                     Text(
                       'Define how you will track progress. A measurable goal allows you to see your advancement and know exactly when you\'ve reached the finish line.',
                       textAlign: TextAlign.center,

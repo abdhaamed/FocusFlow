@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/providers/goal_provider.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/progress_bar.dart';
+import '../widgets/goal_summary_card.dart';
 
 class GoalSummaryScreen extends StatelessWidget {
   const GoalSummaryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final goalProvider = context.watch<GoalProvider>();
+    final timeboundStr = goalProvider.timebound != null 
+        ? 'Goal completion by ${DateFormat('MMMM dd, yyyy').format(goalProvider.timebound!)}.' 
+        : 'No deadline set.';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -28,8 +36,8 @@ class GoalSummaryScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.track_changes, 
-                    color: AppColors.primary, 
+                    Icons.auto_graph_rounded,
+                    color: AppColors.primary,
                     size: 32,
                   ),
                 ),
@@ -57,133 +65,17 @@ class GoalSummaryScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               
-              // Main Card
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: AppColors.primary, width: 4),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Subheader
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'PRIMARY OBJECTIVE',
-                                style: AppTypography.labelMedium.copyWith(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.0,
-                                  color: AppColors.neutral,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Initiating',
-                                  style: AppTypography.labelMedium.copyWith(
-                                    fontSize: 11,
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Q4 Enterprise Market\nExpansion',
-                            style: AppTypography.headlineMedium.copyWith(
-                              fontSize: 22,
-                              color: AppColors.primary,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Progress',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  fontSize: 13,
-                                  color: AppColors.neutral,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                '0%',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  fontSize: 13,
-                                  color: AppColors.neutral,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Progress Bar
-                          const AppProgressBar(
-                            value: 0.0,
-                          ),
-                          const SizedBox(height: 24),
-                          const Divider(color: Color(0xFFE2E8F0)),
-                          const SizedBox(height: 16),
-                          
-                          // SMART Items
-                          _buildSmartItem(
-                            icon: Icons.my_location,
-                            title: 'Specific',
-                            description: 'Penetrate Tier 1 Financial Sector\naccounts.',
-                          ),
-                          _buildSmartItem(
-                            icon: Icons.bar_chart_rounded,
-                            title: 'Measurable',
-                            description: 'Secure 3 net-new Enterprise\ncontracts.',
-                          ),
-                          _buildSmartItem(
-                            icon: Icons.check_circle_outline,
-                            title: 'Achievable',
-                            description: 'Utilize existing Q3 warmed pipeline\nleads.',
-                          ),
-                          _buildSmartItem(
-                            icon: Icons.link,
-                            title: 'Relevant',
-                            description: 'Aligns directly with FY24 global scale\ninitiative.',
-                          ),
-                          _buildSmartItem(
-                            icon: Icons.calendar_today_outlined,
-                            title: 'Time-bound',
-                            description: 'Target completion by December 31,\n2024.',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // Main Card - Actual SMART Goal Data
+              GoalSummaryCard(
+                title: goalProvider.primaryObjective.isNotEmpty 
+                    ? goalProvider.primaryObjective 
+                    : 'Unspecified Objective',
+                specific: goalProvider.specific,
+                measurable: goalProvider.measurable,
+                achievable: goalProvider.achievable,
+                relevant: goalProvider.relevant,
+                timebound: timeboundStr,
+                progressValue: 0.0,
               ),
               const SizedBox(height: 32),
               
@@ -193,7 +85,8 @@ class GoalSummaryScreen extends StatelessWidget {
                 variant: AppButtonVariant.primary,
                 trailingIcon: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                 onPressed: () {
-                  context.push(AppRoutes.onboardingSpecific); // Move to specific goal step
+                  // Final navigation to home or next step
+                  context.go(AppRoutes.home);
                 },
               ),
               const SizedBox(height: 12),
@@ -201,54 +94,12 @@ class GoalSummaryScreen extends StatelessWidget {
                 label: 'Back',
                 variant: AppButtonVariant.outlined,
                 onPressed: () {
-                  context.pop(); // Go back
+                  context.pop(); // Go back to Timebound
                 },
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSmartItem({required IconData icon, required String title, required String description}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: AppColors.neutral),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.labelMedium.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontSize: 13,
-                    color: AppColors.neutral,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

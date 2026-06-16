@@ -22,28 +22,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     _controller = VideoPlayerController.asset('assets/videos/focusflow_video_welcome.mp4')
       ..initialize().then((_) {
         // Ensure the first frame is shown after the video is initialized
-        setState(() {});
-      })
-      ..play();
-
-    // Custom loop logic to prevent black flash on Android
-    _controller.addListener(() {
-      final value = _controller.value;
-      if (value.isInitialized) {
-        final duration = value.duration.inMilliseconds;
-        final position = value.position.inMilliseconds;
-        
-        // Seek to start just before the video ends to avoid the black EOF flash
-        if (duration > 0 && position >= duration - 80) {
-          _controller.seekTo(Duration.zero);
+        if (mounted) {
+          setState(() {});
           _controller.play();
         }
-      }
-    });
+      }).catchError((error) {
+        debugPrint("Video Player Error: $error");
+      });
+
+    // Custom loop logic to prevent black flash on Android
+    _controller.addListener(_videoListener);
+  }
+
+  void _videoListener() {
+    if (!_controller.value.isInitialized) return;
+    
+    final value = _controller.value;
+    final duration = value.duration.inMilliseconds;
+    final position = value.position.inMilliseconds;
+    
+    // Seek to start just before the video ends to avoid the black EOF flash
+    if (duration > 0 && position >= duration - 80) {
+      _controller.seekTo(Duration.zero);
+      _controller.play();
+    }
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_videoListener);
     _controller.dispose();
     super.dispose();
   }
